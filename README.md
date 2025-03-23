@@ -48,6 +48,21 @@ Skynet includes a comprehensive suite of development tools designed for AI-assis
 [Learn more about AI-Assisted Development](docs/concepts/ai-assisted-development.md)  
 [Learn more about AI-Assisted Development (Part 2)](docs/concepts/ai-assisted-development-part2.md)
 
+### 4. AI OS Bootstrap System
+
+Our newest innovation is the AI OS Bootstrap System, which allows an AI system to boot directly from hardware and begin learning to build an operating system:
+
+- **Minimal Boot Environment**: Firmware interface layer and lightweight runtime
+- **Primitive AI Brain**: Pre-trained seed model for hardware recognition and learning
+- **Exploration & Growth**: Systematic discovery of hardware capabilities and environments
+- **Component Development**: Incremental building of OS components through learning
+- **Safety Mechanisms**: Resource limits, experimentation boundaries, and human overrides
+
+[Learn more about the AI Boot System](docs/concepts/ai-boot-system.md)  
+[View the AI OS Implementation Plan](docs/implementation/ai-os-implementation-plan.md)  
+[Explore Key Technical Challenges](docs/implementation/ai-os-technical-challenges.md)  
+[See Practical Implementation Steps](docs/implementation/practical-implementation-steps.md)
+
 ## MSP Applications
 
 The Skynet Project has specific applications for Managed Service Providers (MSPs):
@@ -78,6 +93,11 @@ The Skynet Project adheres to several core design principles:
 ## Implementation Progress
 
 ### Recent Developments
+
+- **AI OS Bootstrap Prototype**: We've implemented a prototype demonstrating how an AI system can boot and begin learning/building an OS:
+  - **Boot Loader**: Simulates the boot sequence from hardware to AI kernel
+  - **Hardware Message Bus**: Provides a unified interface for hardware component discovery
+  - **Learning Agent**: Uses a scientific approach to learn about the system and build components
 
 - **ClarityOS Core**: We've implemented core components of the AI-native operating system:
   - **Message Bus**: A priority-based, publish-subscribe communication system
