@@ -99,3 +99,53 @@ Tensor *create_system_state_tensor(SystemState state) {
     
     return tensor;
 }
+
+ProcessGroup *tensor_to_process_groups(Tensor *tensor) {
+    // In a real implementation, this would convert a tensor to process groups
+    // For this prototype, create dummy process groups
+    
+    // Allocate memory for process groups (including a terminator)
+    ProcessGroup *groups = malloc(sizeof(ProcessGroup) * 3);
+    
+    // First group: essential services
+    groups[0].num_processes = 2;
+    groups[0].processes = malloc(sizeof(ProcessEntry) * groups[0].num_processes);
+    strcpy(groups[0].processes[0].name, "system-logger");
+    groups[0].processes[0].essential = 1;
+    strcpy(groups[0].processes[1].name, "network-manager");
+    groups[0].processes[1].essential = 1;
+    groups[0].wait_for_completion = 1;
+    
+    // Second group: user services
+    groups[1].num_processes = 1;
+    groups[1].processes = malloc(sizeof(ProcessEntry) * groups[1].num_processes);
+    strcpy(groups[1].processes[0].name, "ai-shell");
+    groups[1].processes[0].essential = 0;
+    groups[1].wait_for_completion = 0;
+    
+    // Terminator
+    groups[2].num_processes = 0;
+    
+    return groups;
+}
+
+ResourcePolicy tensor_to_resource_policy(Tensor *tensor) {
+    // In a real implementation, this would convert a tensor to resource policy
+    // For this prototype, create a dummy resource policy
+    
+    ResourcePolicy policy;
+    policy.num_processes = 3;
+    policy.process_policies = malloc(sizeof(ProcessResourcePolicy) * policy.num_processes);
+    
+    // Set dummy policies
+    for (int i = 0; i < policy.num_processes; i++) {
+        policy.process_policies[i].process = malloc(sizeof(ProcessEntry));
+        sprintf(policy.process_policies[i].process->name, "process-%d", i);
+        policy.process_policies[i].cpu_quota = 20 + i * 10;
+        policy.process_policies[i].memory_limit = 100 + i * 50;
+        policy.process_policies[i].io_priority = 3;
+        policy.process_policies[i].network_priority = 3;
+    }
+    
+    return policy;
+}
