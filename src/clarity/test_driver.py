@@ -6,7 +6,9 @@ import sys
 from pathlib import Path
 
 # Add the src directory to the path
-src_dir = Path(__file__).parent.parent
+current_dir = Path(__file__).parent
+src_dir = current_dir.parent
+sys.path.insert(0, str(current_dir))
 sys.path.insert(0, str(src_dir))
 
 from clarity.compiler.parser import ClarityLexer, ClarityParser
