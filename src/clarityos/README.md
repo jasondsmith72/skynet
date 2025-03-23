@@ -24,6 +24,7 @@ ClarityOS reimagines the operating system with these foundational principles:
   - `resource_agent.py` - Resource allocation agent
   - `intent_agent.py` - Natural language understanding agent
   - `hardware_learning_agent.py` - Hardware learning and optimization agent
+  - `system_evolution_agent.py` - System update and evolution management
 - `hardware/` - Hardware interaction components
   - `knowledge_repository.py` - Repository for hardware knowledge
   - `documentation_ingestion.py` - System for processing hardware documentation
@@ -31,23 +32,16 @@ ClarityOS reimagines the operating system with these foundational principles:
   - `experimentation_framework.py` - System for safe hardware experimentation
   - `integration.py` - Integration of hardware learning components
   - `interfaces/` - Hardware interface implementations
-    - `base_interface.py` - Base class for hardware interfaces
-    - `memory_interface.py` - Memory operations interface
-    - `io_interface.py` - I/O operations interface
   - `safety/` - Safety monitors for hardware interaction
-    - `base_safety.py` - Base class for safety monitors
-    - `memory_safety.py` - Memory safety enforcement
 - `kernel/` - Lower-level OS components
   - `ai_init/` - AI-driven init system
   - `ai_sched/` - AI-driven scheduler
   - `ai_mem/` - AI-driven memory manager
+  - `kernel_updater.py` - Safe updating of kernel components
+  - `restart_manager.py` - System restart management
 - `docs/` - Documentation
-  - `architecture/` - Architectural specifications
-  - `AI-OS-VISION.md` - Vision document for true AI-native OS
-  - `AI-OS-ROADMAP.md` - Implementation roadmap
-  - `HARDWARE_LEARNING_PLAN.md` - Plan for hardware learning and integration
-  - `HARDWARE_LEARNING_OVERVIEW.md` - Overview of the hardware learning system
-  - `HARDWARE_LEARNING_SUMMARY.md` - Summary of hardware learning implementation
+  - `IMPLEMENTATION_STATUS.md` - Current implementation status
+  - `AI-OS-IMPLEMENTATION-PLAN.md` - Implementation plan
 
 ## Native Boot Process
 
@@ -61,13 +55,6 @@ ClarityOS is designed to boot directly as an operating system through our specia
 6. **Hardware Learning Initialization**: Activates hardware understanding capabilities
 7. **Agent Activation**: Starts system agents
 8. **User Interface Initialization**: Establishes the natural language interface
-
-### Boot Requirements
-
-- **Hardware**: x86-64 CPU with hardware virtualization support (for development)
-- **Memory**: 4GB+ RAM recommended
-- **Storage**: 10GB+ free space
-- **Pre-boot Environment**: UEFI with Secure Boot disabled
 
 ### Development Mode
 
@@ -86,6 +73,27 @@ python -m src.clarityos.boot_integration
 ```
 
 ## Key Components
+
+### System Evolution (Implemented ✅)
+
+The System Evolution framework enables ClarityOS to securely update itself and evolve over time:
+
+- Monitors for available updates from trusted sources
+- Manages the update lifecycle (discovery, validation, application, testing)
+- Maintains a registry of system components and their versions
+- Provides rollback capabilities in case of failed updates
+- Implements self-updating kernel capabilities for ClarityOS
+
+The System Evolution framework is fully implemented with these components:
+- ✅ System Evolution Agent - Coordinates all update activities
+- ✅ Kernel Updater - Specialized module for safely updating critical kernel components
+- ✅ Restart Manager - Handles graceful restart procedures for updates requiring restart
+- 🔄 Update Validation - Verification of update integrity and compatibility
+- 🔄 Rollback System - Comprehensive recovery from failed updates
+
+For more details, see:
+- [Agents README](agents/README.md) - Details about the System Evolution Agent
+- [Implementation Status](docs/IMPLEMENTATION_STATUS.md) - Current status and next steps
 
 ### Hardware Learning System (Implemented ✅)
 
@@ -109,11 +117,6 @@ The Hardware Learning System is fully implemented with these components:
 - ✅ Experimentation Framework - Controlled hardware experiments
 - ✅ Hardware Learning Agent - Coordination of learning activities
 - ✅ Boot Integration - Seamless boot process integration
-
-For more details, see:
-- [Hardware Learning Overview](docs/HARDWARE_LEARNING_OVERVIEW.md) - Architecture and capabilities
-- [Hardware Learning Plan](docs/HARDWARE_LEARNING_PLAN.md) - Implementation strategy
-- [Hardware Learning Summary](docs/HARDWARE_LEARNING_SUMMARY.md) - Implementation results
 
 ### AI Init System (In Progress 🔄)
 
@@ -170,6 +173,14 @@ This diagram illustrates the ClarityOS architecture as a true AI-native OS:
 └───────────────┬───────────────────────────────────┘
                 │
 ┌───────────────▼───────────────────────────────────┐
+│       System Evolution Framework ✅               │
+│  ┌───────────┐  ┌───────────┐  ┌───────────┐      │
+│  │ Update    │  │ Kernel    │  │ Restart   │      │
+│  │ Management│  │ Updater   │  │ Manager   │      │
+│  └───────────┘  └───────────┘  └───────────┘      │
+└───────────────┬───────────────────────────────────┘
+                │
+┌───────────────▼───────────────────────────────────┐
 │              AI Kernel Layer 📅                  │
 │  ┌───────────┐  ┌───────────┐  ┌───────────┐      │
 │  │ AI        │  │ AI Memory │  │ AI I/O    │      │
@@ -218,12 +229,14 @@ ClarityOS is being developed in phases:
    - Message bus architecture ✅
    - Agent system framework ✅
    - Boot process implementation ✅
+   - Hardware learning system ✅
+   - System evolution framework ✅
 
 2. **AI Core Phase** (Current 🔄)
-   - Hardware learning and adaptation ✅
    - AI Init System implementation 🔄
    - AI Shell development 📅
    - System monitoring and learning framework 🔄
+   - Complete System Evolution capabilities 🔄
 
 3. **Kernel Integration Phase** (Planned 📅)
    - AI scheduler modules 📅
@@ -236,31 +249,35 @@ ClarityOS is being developed in phases:
    - Developer APIs for AI-native applications 📅
    - Talent-based AI orchestration system 📅
 
-For more details, see the [AI-OS-ROADMAP.md](docs/AI-OS-ROADMAP.md) document.
-
 ## Next Development Steps
 
-Having completed the Hardware Learning System, our next priorities are:
+With the System Evolution framework and Hardware Learning System in place, our next priorities are:
 
-1. **Complete the AI Init System**
+1. **Enhance System Evolution Capabilities**
+   - Complete update validation and verification system
+   - Improve rollback capabilities with more comprehensive state preservation
+   - Implement differential updates for efficiency
+   - Develop self-updating features
+
+2. **Complete the AI Init System**
    - Implement process learning capabilities
    - Develop adaptive optimization based on hardware knowledge
-   - Integrate with Hardware Learning System for hardware-aware process management
+   - Integrate with System Evolution for updateable processes
 
-2. **Begin AI Shell Development**
+3. **Begin AI Shell Development**
    - Develop intent recognition for system commands
    - Implement natural language processing for system management
    - Create context-aware command interpretation
 
-3. **Enhance Hardware Learning System**
+4. **Enhance Hardware Learning System**
    - Add support for more specialized hardware types
    - Implement cross-component learning
    - Develop predictive behavior modeling
 
-4. **Expand Documentation**
-   - Create end-user documentation
-   - Improve developer guides
-   - Add integration examples
+5. **Integrate Core Components**
+   - Create coherent interactions between all implemented systems
+   - Develop unified monitoring and management interface
+   - Establish cross-component learning and optimization
 
 ## Contributing
 
@@ -268,19 +285,23 @@ Contributions are welcome! See the [Skynet Project README](../../README.md) for 
 
 For ClarityOS specific contributions, we currently prioritize:
 
-1. **AI Init System Components**
+1. **System Evolution Enhancements**
+   - Update validation and verification mechanisms
+   - Rollback improvements
+   - Differential update implementation
+
+2. **AI Init System Components**
    - Process learning module
    - Resource governance implementation
    - Boot optimization based on hardware knowledge
 
-2. **Hardware Learning Enhancements**
+3. **Hardware Learning Enhancements**
    - Additional hardware interface implementations
    - Enhanced safety monitoring for specialized hardware
    - Improved documentation processing
 
-3. **Testing and Validation**
+4. **Testing and Validation**
+   - Update process validation
    - Hardware learning validation tools
    - Performance benchmarking
    - Safety verification
-
-See the [AI-OS-VISION.md](docs/AI-OS-VISION.md) document for more details on the project vision.
