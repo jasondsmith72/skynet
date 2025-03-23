@@ -101,6 +101,8 @@ def display_healing_demo(filename):
         print("-" * 40)
         
         fixed_code = code
+        successfully_healed = 0
+        
         for error in errors:
             print(f"Healing: {error['message']}")
             
@@ -109,6 +111,7 @@ def display_healing_demo(filename):
                 if result["success"]:
                     fixed_code = result["healed_code"]
                     print(f"  Success! {result['message']}")
+                    successfully_healed += 1
                 else:
                     print(f"  Failed! {result['message']}")
             
@@ -117,12 +120,19 @@ def display_healing_demo(filename):
                 if result["success"]:
                     fixed_code = result["healed_code"]
                     print(f"  Success! {result['message']}")
+                    successfully_healed += 1
                 else:
                     print(f"  Failed! {result['message']}")
             
             elif error['type'] == 'type' and error['category'] == 'type_mismatch':
-                print("  Type mismatch healing not fully implemented yet")
-                print("  Recommendation: Convert string to number using parseInt or parseFloat")
+                result = healing_engine.heal_type_mismatch(fixed_code, error)
+                if result["success"]:
+                    fixed_code = result["healed_code"]
+                    print(f"  Success! {result['message']}")
+                    successfully_healed += 1
+                else:
+                    print(f"  Failed! {result['message']}")
+                    print(f"  Recommendation: Convert string to number using parseInt or parseFloat")
         
         # Show healed code
         if fixed_code != code:
@@ -133,9 +143,8 @@ def display_healing_demo(filename):
             
             print("\nSUMMARY:")
             print("-" * 40)
-            successful = sum(1 for e in errors if e['type'] in ('syntax', 'reference'))
-            print(f"Successfully healed {successful} out of {len(errors)} errors")
-            print(f"Self-healing success rate: {successful/len(errors)*100:.1f}%")
+            print(f"Successfully healed {successfully_healed} out of {len(errors)} errors")
+            print(f"Self-healing success rate: {successfully_healed/len(errors)*100:.1f}%")
         else:
             print("\nNo healing was possible for the detected errors.")
 
