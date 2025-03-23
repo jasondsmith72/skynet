@@ -3,9 +3,13 @@
 import unittest
 import sys
 import os
+from pathlib import Path
 
 # Add the src directory to the path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+current_dir = Path(__file__).parent
+src_dir = current_dir.parent.parent
+sys.path.insert(0, str(current_dir))
+sys.path.insert(0, str(src_dir))
 
 from clarity.compiler.parser import ClarityLexer, ClarityParser
 from clarity.runtime.diagnostic_runtime import ClarityDiagnosticRuntime
