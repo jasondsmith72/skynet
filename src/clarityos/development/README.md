@@ -31,20 +31,55 @@ results = cus.find_entity("SystemEvolutionAgent")
 
 See the [example script](examples/code_understanding_example.py) for a demonstration of analyzing the ClarityOS codebase.
 
+### Code Generation System
+
+The Code Generation System enables ClarityOS to generate and modify code based on specifications and patterns learned from existing code. This system works with the Code Understanding System to ensure generated code follows consistent patterns and conventions.
+
+**Current capabilities:**
+- Generate code from high-level specifications
+- Create new components (agents, managers, interfaces)
+- Apply consistent code style based on existing patterns
+- Generate code that integrates with ClarityOS architecture
+
+**Example usage:**
+```python
+from clarityos.development.code_understanding import CodeUnderstandingSystem
+from clarityos.development.code_generation import CodeGenerationSystem
+
+# Initialize the systems
+cus = CodeUnderstandingSystem("/path/to/codebase")
+cus.initialize()
+cgs = CodeGenerationSystem(cus)
+
+# Generate a new agent component
+agent_code = cgs.generate_component(
+    "DataAnalytics", 
+    "agent",
+    features=["Data Processing", "Statistical Analysis"]
+)
+
+# Generate a class from a detailed specification
+class_spec = {
+    "type": "class",
+    "name": "TextProcessor",
+    "doc": "Utility class for text processing.",
+    "methods": [
+        {
+            "name": "tokenize",
+            "parameters": [{"name": "text", "type": "str"}],
+            "return_type": "List[str]",
+            "body": "return text.split()"
+        }
+    ]
+}
+class_code = cgs.generate_code(class_spec)
+```
+
+See the [example script](examples/code_generation_example.py) for a demonstration of code generation capabilities.
+
 ## Planned Components
 
 According to the [Self-Programming Roadmap](../docs/SELF-PROGRAMMING-ROADMAP.md), the following components will be developed:
-
-### Code Generation System
-
-This system will enable ClarityOS to generate new code or modify existing code based on high-level intent and requirements.
-
-**Planned capabilities:**
-- Context-aware code generation
-- Style-consistent code production
-- Test case generation
-- Documentation generation
-- Code review capabilities
 
 ### Development Environment Integration
 
@@ -71,23 +106,23 @@ This system will provide mechanisms for identifying improvement opportunities wi
 
 The following tasks should be prioritized for the next development phase:
 
-1. **Enhance the Code Understanding System**
-   - Add support for analyzing type annotations
-   - Improve relationship detection for external libraries
-   - Implement deeper semantic analysis of function bodies
-   - Add pattern recognition for common design patterns
+1. **Enhance the Code Generation System**
+   - Add support for code modification (in addition to generation)
+   - Implement validation of generated code
+   - Create mechanisms for testing generated code
+   - Develop more advanced template capabilities
 
-2. **Begin Code Generation System Implementation**
-   - Develop the initial framework for generating code based on specifications
-   - Implement pattern-based code generation for common structures
-   - Create a context manager for maintaining code style consistency
-   - Implement basic test generation capabilities
+2. **Begin Development Environment Integration**
+   - Implement Git operations for code management
+   - Create build system integration
+   - Develop mechanisms for managing dependencies
+   - Implement deployment capabilities
 
-3. **Develop Git Integration**
-   - Implement basic Git operations (commit, push, pull)
-   - Add branch management capabilities
-   - Create mechanisms for conflict resolution
-   - Implement change visualization for review
+3. **Create the Self-Improvement Framework Foundation**
+   - Develop code quality metrics
+   - Implement basic refactoring capabilities
+   - Create test coverage analysis
+   - Implement performance analysis
 
 ## Development Guidelines
 
