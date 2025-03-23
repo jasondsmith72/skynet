@@ -75,6 +75,17 @@ The latest addition to our project is the AI Talent Integration Framework, which
 
 [Learn more about the AI Talent Integration Framework](docs/implementation/future-work-ai-integration.md)  
 
+### 6. Kernel Self-Update System
+
+Our latest implementation is the Kernel Self-Update System, which enables ClarityOS to update its own core components safely while maintaining system stability:
+
+- **System Evolution**: Autonomous detection and application of system updates
+- **Safe Update Mechanics**: Backup, verification, and rollback capabilities
+- **Critical Component Handling**: Special procedures for updating kernel components
+- **Continuous Improvement**: OS that grows more capable and efficient over time
+
+[Learn more about the Kernel Self-Update System](docs/implementation/kernel-self-update.md)
+
 ## MSP Applications
 
 The Skynet Project has specific applications for Managed Service Providers (MSPs):
@@ -105,6 +116,14 @@ The Skynet Project adheres to several core design principles:
 ## Implementation Progress
 
 ### Recent Developments
+
+- **Kernel Self-Update System**: We've implemented a fully functional kernel self-update capability:
+  - **System Evolution Agent**: Monitors for updates and manages the update lifecycle
+  - **Kernel Updater**: Safely updates critical kernel components with rollback capabilities
+  - **Restart Manager**: Handles graceful system restarts for updates
+  - **Self-Healing**: Automatically detects and recovers from failed updates
+
+  This enables ClarityOS to autonomously improve itself over time while maintaining system stability.
 
 - **AI Talent Integration System**: We've implemented a prototype that enables the OS to:
   - **Discover and Evaluate** specialized AI models with various capabilities
