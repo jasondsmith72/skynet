@@ -67,3 +67,21 @@ double get_cpu_usage() {
     last_cpu = new_cpu;
     return new_cpu;
 }
+
+double get_memory_usage() {
+    // In a real implementation, this would read from /proc/meminfo
+    // For this prototype, return a dummy value
+    return 0.4 + ((double)rand() / RAND_MAX - 0.5) * 0.1;  // 0.35 to 0.45
+}
+
+double get_io_usage() {
+    // In a real implementation, this would read from /proc/diskstats
+    // For this prototype, return a dummy value
+    return 0.2 + ((double)rand() / RAND_MAX - 0.5) * 0.1;  // 0.15 to 0.25
+}
+
+double get_network_usage() {
+    // In a real implementation, this would read from /proc/net/dev
+    // For this prototype, return a dummy value
+    return 0.1 + ((double)rand() / RAND_MAX - 0.5) * 0.05;  // 0.075 to 0.125
+}
