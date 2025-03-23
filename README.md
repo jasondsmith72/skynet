@@ -78,9 +78,15 @@ The Skynet Project adheres to several core design principles:
 The Skynet Project has several ambitious goals for future development:
 
 - **Advanced Self-Healing**: [Virtualized troubleshooting and autonomous system repair](docs/implementation/future-work-advanced-healing.md)
-- **Hardware-Specific Acceleration**: Custom silicon optimized for AI-native programming
-- **Distributed Computing Fabric**: Seamless distribution of workloads across device networks
-- **Neuromorphic Interface Integration**: Direct brain-computer interfaces for intent capture
+- **Federated Computing**: [Creating a mesh of computing resources across devices](docs/implementation/future-work-areas.md#1-federated-computing-ecosystem)
+- **Autonomous System Evolution**: [Systems that evolve themselves based on usage patterns](docs/implementation/future-work-areas.md#2-autonomous-system-evolution)
+- **Cross-Reality Computing**: [Extending computing across physical and virtual spaces](docs/implementation/future-work-areas.md#3-cross-reality-computing)
+- **Proactive Intent Prediction**: [Anticipating user needs before they're expressed](docs/implementation/future-work-areas.md#4-proactive-intent-prediction)
+- **Autonomous Security Evolution**: [Security systems that evolve against emerging threats](docs/implementation/future-work-areas.md#5-autonomous-security-evolution)
+- **Ambient Intelligence**: [Distributed intelligence throughout physical spaces](docs/implementation/future-work-areas.md#6-ambient-intelligence-ecosystem)
+- **Cognitive Diversity Adaptation**: [Interfaces that adapt to individual cognitive styles](docs/implementation/future-work-areas.md#7-adaptive-interfaces-for-cognitive-diversity)
+
+[Explore all future work areas](docs/implementation/future-work-areas.md)
 
 ## Contributing
 
