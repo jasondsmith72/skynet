@@ -51,3 +51,19 @@ void update_system_state() {
     // Record state update for learning
     record_state_update();
 }
+
+// Helper functions to get system metrics
+double get_cpu_usage() {
+    // In a real implementation, this would read from /proc/stat
+    // For this prototype, return a dummy value that changes slightly each time
+    static double last_cpu = 0.3;
+    double change = ((double)rand() / RAND_MAX - 0.5) * 0.1;  // -0.05 to +0.05
+    double new_cpu = last_cpu + change;
+    
+    // Keep within bounds
+    if (new_cpu < 0.05) new_cpu = 0.05;
+    if (new_cpu > 0.95) new_cpu = 0.95;
+    
+    last_cpu = new_cpu;
+    return new_cpu;
+}
