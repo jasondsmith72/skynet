@@ -16,7 +16,11 @@ Clarity is an AI-native programming language designed from the ground up to inte
 - **Runtime AI Agents**: First-class support for deploying AI agents within applications
 - **Hardware-Aware Execution**: Automatic optimization across diverse computing resources
 
-[Learn more about Clarity](docs/concepts/ai-native-programming.md)
+**New: [Clarity Compiler Implementation](src/clarity/)** - We've implemented the core compiler components for the Clarity language, including a lexer, parser, and semantic analyzer. Check out the implementation in the `src/clarity/` directory, along with example programs that demonstrate the language's AI-native features.
+
+[Learn more about Clarity](docs/concepts/ai-native-programming.md)  
+[View Clarity Implementation Plan](docs/implementation/clarity_language_implementation_plan.md)  
+[Explore Clarity AI-Native Features](docs/implementation/clarity_ai_native_features.md)
 
 ### 2. ClarityOS
 
@@ -101,6 +105,8 @@ The Skynet Project has specific applications for Managed Service Providers (MSPs
 
 The project includes practical examples of how the Clarity language and ClarityOS concepts can be applied:
 
+- [Image Classifier](src/clarity/examples/image_classifier.clarity): Implementing a CNN in Clarity's AI-native syntax
+- [MSP Monitoring System](src/clarity/examples/msp_monitoring.clarity): Automated monitoring with remediation
 - [Single Input Model](docs/examples/single-input-model.md): Converting natural language to system actions
 - [Secure APIs](docs/examples/secure-apis.md): Building security into API designs
 - [AI Code Testing and Fixing](docs/examples/ai-code-testing-fixing.md): Self-healing code examples
@@ -116,6 +122,15 @@ The Skynet Project adheres to several core design principles:
 ## Implementation Progress
 
 ### Recent Developments
+
+- **Clarity Programming Language Implementation**: We've implemented the core compiler components for the Clarity language:
+  - **Lexer**: Tokenizes Clarity source code with support for AI-native constructs
+  - **Parser**: Builds an AST representing Clarity programs
+  - **Semantic Analyzer**: Performs type checking and verifies semantic correctness
+  - **Example Programs**: Demonstrates language features with real-world applications
+  - **Test Suite**: Validates compiler components work correctly
+
+  This implementation provides a foundation for the AI-native language that powers our vision.
 
 - **Kernel Self-Update System**: We've implemented a fully functional kernel self-update capability:
   - **System Evolution Agent**: Monitors for updates and manages the update lifecycle
@@ -146,10 +161,18 @@ The Skynet Project adheres to several core design principles:
 
 ### Next Steps
 
-- Expand agent capabilities with learning from usage patterns
-- Implement semantic file system prototype
-- Develop integration with existing operating systems
-- Create user interface prototypes for natural language interaction
+- **Clarity Language Development**:
+  - Implement code generation for target platforms
+  - Develop runtime libraries to support AI-native features
+  - Create language servers for IDE integration
+  - Build package management system
+  - Implement self-healing capabilities
+
+- **Operating System Enhancements**:
+  - Expand agent capabilities with learning from usage patterns
+  - Implement semantic file system prototype
+  - Develop integration with existing operating systems
+  - Create user interface prototypes for natural language interaction
 
 ## Future Work and Roadmap
 
@@ -186,7 +209,7 @@ As an MSP-focused initiative, the Skynet Project aims to dramatically reduce the
 
 ## Project Status
 
-The Skynet Project has moved from conceptual phase to early implementation. We have working prototypes of core ClarityOS components and continue to develop the language specification, system architecture, and additional implementations. Progress updates will be posted here as the project advances.
+The Skynet Project has moved from conceptual phase to early implementation. We have working prototypes of core ClarityOS components, a functioning compiler for the Clarity language, and continue to develop the system architecture and additional implementations. Progress updates will be posted here as the project advances.
 
 ## Connect
 
