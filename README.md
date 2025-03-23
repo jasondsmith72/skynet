@@ -1,73 +1,96 @@
-# Skynet: The Clarity Programming Language
+# Skynet Project: AI-Driven Computing
 
-Clarity is a next-generation programming language designed to combine the best features of existing languages while addressing common pain points and maximizing developer productivity.
+## Overview
 
-## 🚀 Core Design Philosophy
+The Skynet Project is an ambitious initiative to create a new computing paradigm centered around the Clarity programming language, an AI-native language designed for maximum human productivity, system reliability, and optimal hardware utilization. This project aims to fundamentally reimagine how humans interact with computers by placing AI at the center of the computing experience.
 
-Clarity is designed to combine the readability of Python, the functional elegance of Haskell, the strong typing of TypeScript, and the performance characteristics of Rust—all while removing unnecessary complexity.
+## Core Components
 
-## ✨ Key Features
+### 1. Clarity Programming Language
 
-- **Natural Language Syntax** - Code that reads closer to English while maintaining precision
-- **Intelligent Type System** - Strong typing without the verbosity
-- **Built-in Error Handling** - No more exception spaghetti
-- **Memory Safety Without Complexity** - Automatic memory management with optional control
-- **First-Class Concurrency** - Simple yet powerful parallel and async execution
-- **Consistent Standard Library** - Comprehensive but logical API design
-- **Interactive Documentation** - Help when you need it
-- **Gradual Learning Curve** - Start simple, advance naturally
-- **File Size Guidelines** - Keeping files between 200-300 lines for maintainability
-- **Security By Design** - Security principles built into the language
-- **AI-Native Programming** - First-class AI integration
-- **Multi-Tenant Architecture** - Built-in constructs for secure multi-tenant applications
-- **Compliance Automation** - Automate meeting regulatory requirements
+Clarity is an AI-native programming language designed from the ground up to integrate artificial intelligence throughout the development process and runtime environment. Key features include:
 
-## 📚 Documentation
+- **Declarative AI Processing**: Built-in AI operations for text generation, data extraction, and more
+- **Intent-Based Programming**: Express what you want, not how to do it
+- **Self-Documenting Code**: Clear, readable syntax that communicates intent
+- **Runtime AI Agents**: First-class support for deploying AI agents within applications
+- **Hardware-Aware Execution**: Automatic optimization across diverse computing resources
 
-### Language Fundamentals
-- **[Language Overview](docs/language-overview.md)** - Core principles and design goals
-- **[Syntax Guide](docs/syntax-guide.md)** - Detailed syntax and language constructs
+[Learn more about Clarity](docs/concepts/ai-native-programming.md)
 
-### Core Principles
-- **[Code Organization Principles](docs/principles/code-organization.md)** - Best practices for maintainable code
-- **[Security by Design](docs/concepts/security-by-design.md)** - Built-in security features
-- **[AI-Native Programming](docs/concepts/ai-native-programming.md)** - AI integration capabilities
+### 2. ClarityOS
 
-### MSP Use Cases
-- **[Automated Monitoring](docs/msp-use-cases/automated-monitoring.md)** - Building monitoring systems
-- **[Multi-Tenant Security](docs/msp-use-cases/multi-tenant-security.md)** - Secure multi-client architecture
-- **[Compliance Automation](docs/msp-use-cases/compliance-automation.md)** - Automating regulatory compliance
+ClarityOS is an operating system concept built around a unified natural language interface and AI-driven resource management:
 
-### Example Patterns
-- **[Secure API Patterns](docs/examples/secure-apis.md)** - Building secure web APIs
+- **Single Input Model**: Natural language as the universal interface
+- **Resource-Aware Computing**: Dynamic optimization of hardware utilization
+- **Contextual Adaptation**: System behavior that adapts to user needs and context
+- **Semantic Data Organization**: Content-aware file system beyond hierarchical folders
+- **Security and Privacy by Design**: AI-enhanced security with privacy-preserving operations
 
-### Implementation
-- **[Implementation Roadmap](docs/implementation/roadmap.md)** - Development plan and timeline
+[Learn more about ClarityOS](docs/concepts/ai-driven-os.md)
 
-## 🚧 Project Status
+### 3. Development Tools
 
-This is a conceptual language design project. Clarity is not yet implemented as a working programming language, but the design and specifications are being actively developed.
+Skynet includes a comprehensive suite of development tools designed for AI-assisted coding:
 
-## 👥 Contributing
+- **AI-Assisted Development**: AI helps write, test, and optimize code
+- **Intelligent Testing**: Automatic test generation and validation
+- **Self-Healing Systems**: Automatic detection and repair of issues
+- **Continuous Learning**: Systems that improve from operational data
 
-We welcome contributions to the Clarity language design! If you have ideas for language features, improvements to the documentation, or examples that demonstrate the potential of Clarity, please:
+[Learn more about AI-Assisted Development](docs/concepts/ai-assisted-development.md)
+[Learn more about AI-Assisted Development (Part 2)](docs/concepts/ai-assisted-development-part2.md)
 
-1. Fork the repository
-2. Create a feature branch
-3. Submit a pull request with your changes
+## MSP Applications
 
-See the [Implementation Roadmap](docs/implementation/roadmap.md) for details on how you can get involved in building Clarity.
+The Skynet Project has specific applications for Managed Service Providers (MSPs):
 
-## 📋 Future Directions
+- **Automated Monitoring**: Intelligent systems for detecting and resolving issues
+- **Client Management**: Streamlined operations through AI assistants
+- **Compliance Automation**: Automated verification and remediation of compliance issues
+- **Multi-Tenant Security**: Advanced security models for managing multiple client environments
 
-Clarity is designed to address many pain points in existing programming languages, particularly for building secure, maintainable, and AI-integrated applications. Future development will focus on:
+[Learn more about MSP Use Cases](docs/msp-use-cases/)
 
-- Compiler and runtime development
-- Standard library implementation
-- Developer tooling and IDE integration
-- Expanded documentation and examples
-- Community building and governance
+## Examples
 
-## 📝 License
+The project includes practical examples of how the Clarity language and ClarityOS concepts can be applied:
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+- [Single Input Model](docs/examples/single-input-model.md): Converting natural language to system actions
+- [Secure APIs](docs/examples/secure-apis.md): Building security into API designs
+- [AI Code Testing and Fixing](docs/examples/ai-code-testing-fixing.md): Self-healing code examples
+
+## Design Principles
+
+The Skynet Project adheres to several core design principles:
+
+- **Hardware Maximization**: [Optimal utilization of all computing resources](docs/concepts/maximizing-hardware-utilization.md)
+- **Security by Design**: [Security as a foundational element](docs/concepts/security-by-design.md)
+- **Code Organization**: [Maintainable structure for complex systems](docs/principles/code-organization.md)
+
+## Contributing
+
+The Skynet Project is under active development. We welcome contributions in several areas:
+
+- **Language Design**: Help refine the Clarity language specification
+- **Use Cases**: Contribute ideas for applications in different domains
+- **Implementation**: Join the effort to build prototypes and components
+- **Documentation**: Improve guides, references, and examples
+
+## Vision
+
+Our vision is to create computing systems that work the way humans think rather than forcing humans to think the way computers work. By placing AI at the center of the computing experience, we aim to make technology more accessible, more powerful, and more aligned with human intent.
+
+With a natural language interface backed by sophisticated AI understanding, computing becomes more of a collaborative partnership and less of a technical exercise. ClarityOS and the Clarity language are steps toward this vision of truly human-centered computing.
+
+As an MSP-focused initiative, the Skynet Project aims to dramatically reduce the operational overhead of managing complex technology environments while improving service quality and client satisfaction. By automating routine tasks, providing intelligent assistance for complex problems, and continuously learning from operational data, the system becomes increasingly valuable over time.
+
+## Project Status
+
+The Skynet Project is currently in the conceptual and design phase. We are developing the language specification, system architecture, and prototype implementations. Progress updates will be posted here as the project advances.
+
+## Connect
+
+- Project Lead: Jason Smith, CTO
+- Contact: jason.smith@mtusa.com
