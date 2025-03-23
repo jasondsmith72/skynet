@@ -1,0 +1,20 @@
+// Example with intentional errors to demonstrate self-healing
+
+function calculateTotal(items) {
+    let total = 0
+    
+    for (let i = 0; i < items.length; i++) {
+        total += items[i].price * items[i].quantity;
+    }
+    
+    // Missing semicolon below
+    return total
+}
+
+// Undefined variable usage
+console.log(products);
+
+// Type mismatch
+let price = "10";
+let quantity = 5;
+let total = price * quantity;

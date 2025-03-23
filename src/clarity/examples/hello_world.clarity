@@ -1,0 +1,7 @@
+// Basic Hello World example in Clarity
+
+function main() {
+    print("Hello, World!");
+}
+
+main();
