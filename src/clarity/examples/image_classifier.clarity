@@ -1,0 +1,139 @@
+// Image Classifier Example in Clarity Language
+// This example demonstrates a simple CNN model for image classification
+
+import vision.preprocessing
+import vision.models.layers
+import data.datasets
+
+// Utility function to preprocess images
+@target(CPU | GPU)
+func preprocessImage(image: tensor<float32[H, W, 3]>) -> tensor<float32[3, 224, 224]> {
+    // Resize image to standard input size
+    var resized = vision.preprocessing.resize(image, [224, 224]);
+    
+    // Normalize pixel values to [-1, 1]
+    var normalized = vision.preprocessing.normalize(
+        resized, 
+        mean: [0.485, 0.456, 0.406], 
+        std: [0.229, 0.224, 0.225]
+    );
+    
+    // Convert to channel-first format
+    return vision.preprocessing.channels_first(normalized);
+}
+
+// Define a simple convolutional neural network for image classification
+model SimpleImageClassifier {
+    // Model architecture using layers
+    layers {
+        conv1 = Conv2D(3, 32, kernelSize: 3, activation: relu);
+        pool1 = MaxPool2D(2);
+        conv2 = Conv2D(32, 64, kernelSize: 3, activation: relu);
+        pool2 = MaxPool2D(2);
+        conv3 = Conv2D(64, 128, kernelSize: 3, activation: relu);
+        pool3 = MaxPool2D(2);
+        flatten = Flatten();
+        dropout = Dropout(0.5);
+        fc1 = Dense(128 * 28 * 28, 512, activation: relu);
+        fc2 = Dense(512, 1000, activation: softmax);
+    }
+    
+    // Forward pass definition
+    forward(input: tensor<float32[3, 224, 224]>) -> tensor<float32[1000]> {
+        var x = input;
+        x = conv1(x);
+        x = pool1(x);
+        x = conv2(x);
+        x = pool2(x);
+        x = conv3(x);
+        x = pool3(x);
+        x = flatten(x);
+        x = dropout(x);
+        x = fc1(x);
+        return fc2(x);
+    }
+    
+    // Training method
+    train(dataset: data.datasets.Dataset<tensor<float32[H, W, 3]>, tensor<float32[1000]>>, epochs: int) {
+        // Configure optimizer and loss function
+        var optimizer = Adam(learningRate: 0.001, weightDecay: 1e-5);
+        var loss = CrossEntropy();
+        
+        // Training loop
+        for epoch in 1..epochs {
+            // Process batches
+            for batch in dataset.batches(size: 32) {
+                // Preprocess images
+                var processedImages = batch.inputs.map(preprocessImage);
+                
+                // Forward pass with automatic differentiation
+                var predictions = self(processedImages);
+                var batchLoss = loss(predictions, batch.labels);
+                
+                // Backward pass and optimization
+                backward(batchLoss);
+                optimizer.step();
+                
+                // Log progress
+                if batch.index % 10 == 0 {
+                    print("Epoch {epoch}, Batch {batch.index}, Loss: {batchLoss}");
+                }
+            }
+            
+            // Validate after each epoch
+            var accuracy = validate(dataset.validationSet);
+            print("Epoch {epoch} completed. Validation accuracy: {accuracy}");
+        }
+    }
+    
+    // Validation method
+    func validate(dataset: data.datasets.Dataset<tensor<float32[H, W, 3]>, tensor<float32[1000]>>) -> float {
+        var correct = 0;
+        var total = 0;
+        
+        // Disable gradient tracking for validation
+        withoutGradients {
+            for batch in dataset.batches(size: 64) {
+                var processedImages = batch.inputs.map(preprocessImage);
+                var predictions = self(processedImages);
+                
+                // Get predicted class indices
+                var predictedClasses = predictions.argmax(dim: 1);
+                var actualClasses = batch.labels.argmax(dim: 1);
+                
+                // Count correct predictions
+                correct += (predictedClasses == actualClasses).sum();
+                total += batch.size;
+            }
+        }
+        
+        return float(correct) / float(total);
+    }
+}
+
+// Main function to demonstrate usage
+func main() {
+    // Load dataset
+    var imagenet = data.datasets.load("imagenet_mini");
+    
+    // Create and train model
+    var model = SimpleImageClassifier.new();
+    model.train(imagenet, epochs: 10);
+    
+    // Save the trained model
+    model.save("simple_classifier.clarity", format: "onnx");
+    
+    // Load an image for inference
+    var testImage = vision.preprocessing.loadImage("test_image.jpg");
+    var processed = preprocessImage(testImage);
+    
+    // Run inference
+    var predictions = model(processed);
+    var topClasses = predictions.topK(5);
+    
+    // Print results
+    print("Top 5 predictions:");
+    for i in 0..5 {
+        print("{i+1}. {imagenet.classes[topClasses.indices[i]]}: {topClasses.values[i]}");
+    }
+}
