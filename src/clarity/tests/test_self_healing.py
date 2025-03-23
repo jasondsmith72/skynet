@@ -68,6 +68,48 @@ class TestSelfHealing(unittest.TestCase):
         self.assertTrue(result["success"])
         self.assertEqual(result["healed_code"], "let undefinedVar = null;\nconsole.log(undefinedVar);")
     
+    def test_type_mismatch_string_to_number_healing(self):
+        """Test healing of type mismatch errors - string to number conversion."""
+        # Code with string-number multiplication
+        code = "let price = \"10\";\nlet quantity = 5;\nlet total = price * quantity;"
+        
+        # Simulate the error analysis
+        analysis = {
+            "type": "type",
+            "category": "type_mismatch",
+            "analyzed": True,
+            "code_snippet": "let total = price * quantity;"
+        }
+        
+        # Try to heal the code
+        result = self.healing_engine.heal_type_mismatch(code, analysis)
+        
+        # Check the results
+        self.assertTrue(result["success"])
+        self.assertEqual(result["healed_code"], "let price = \"10\";\nlet quantity = 5;\nlet total = parseFloat(price) * quantity;")
+        self.assertIn("parseFloat", result["healed_code"])
+    
+    def test_type_mismatch_string_literal_healing(self):
+        """Test healing of type mismatch errors - string literal to number conversion."""
+        # Code with string literal that should be a number
+        code = "let price = \"10\";\nlet quantity = 5;\nlet total = price * quantity;"
+        
+        # Create a modified analysis that will trigger the string literal conversion
+        analysis = {
+            "type": "type",
+            "category": "type_mismatch",
+            "analyzed": True,
+            "code_snippet": "let price = \"10\";"
+        }
+        
+        # Try to heal the code
+        result = self.healing_engine.heal_type_mismatch(code, analysis)
+        
+        # Check the results
+        self.assertTrue(result["success"])
+        self.assertEqual(result["healed_code"], "let price = 10;\nlet quantity = 5;\nlet total = price * quantity;")
+        self.assertNotIn("\"10\"", result["healed_code"])
+    
     def test_end_to_end_healing(self):
         """Test the end-to-end healing process."""
         # This test would normally use the actual runtime to execute code
