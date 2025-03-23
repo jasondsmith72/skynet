@@ -85,3 +85,35 @@ double get_network_usage() {
     // For this prototype, return a dummy value
     return 0.1 + ((double)rand() / RAND_MAX - 0.5) * 0.05;  // 0.075 to 0.125
 }
+
+int count_processes() {
+    // In a real implementation, this would read from /proc
+    // For this prototype, return a dummy value
+    return 50 + rand() % 10;  // 50 to 59
+}
+
+int count_users() {
+    // In a real implementation, this would use getutent()
+    // For this prototype, return a dummy value
+    return 1 + rand() % 2;  // 1 to 2
+}
+
+void update_power_state() {
+    // In a real implementation, this would read from /sys
+    // For this prototype, use dummy values
+    
+    // Only update occasionally to simulate stability
+    if (rand() % 10 == 0) {
+        current_state.on_ac_power = rand() % 2;  // 0 or 1
+    }
+    
+    // If on battery, decrease battery level
+    if (!current_state.on_ac_power) {
+        current_state.battery_level -= 0.1;
+        if (current_state.battery_level < 0) current_state.battery_level = 0;
+    } else {
+        // If on AC, charge battery
+        current_state.battery_level += 0.2;
+        if (current_state.battery_level > 100) current_state.battery_level = 100;
+    }
+}
