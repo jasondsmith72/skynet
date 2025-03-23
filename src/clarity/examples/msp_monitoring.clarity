@@ -1,0 +1,232 @@
+// MSP Monitoring System Example in Clarity Language
+// This example demonstrates automated monitoring and remediation for MSP environments
+
+import sys.monitoring
+import sys.remediation
+import data.streaming
+import ml.anomaly
+import ml.forecasting
+import client.management
+
+// Define a real-time monitoring model for system metrics
+model SystemAnomalyDetector {
+    // Model components
+    components {
+        preprocessor = TimeSeriesPreprocessor();
+        encoder = VariationalAutoEncoder(dims: [100, 50, 20, 10]);
+        anomalyScorer = ReconstructionErrorScorer();
+        thresholdLearner = AdaptiveThreshold(history: 30.days);
+    }
+    
+    // Forward pass for anomaly detection
+    forward(metrics: tensor<float32[N, features]>) -> tensor<float32[N]> {
+        // Preprocess time-series data
+        var processed = preprocessor(metrics);
+        
+        // Encode and reconstruct
+        var encoded = encoder(processed);
+        var reconstructed = encoder.decode(encoded);
+        
+        // Calculate reconstruction error as anomaly score
+        var scores = anomalyScorer(processed, reconstructed);
+        
+        return scores;
+    }
+    
+    // Training method with continual learning
+    train(initialData: data.streaming.DataStream<SystemMetrics>) {
+        // Initial training
+        var batchedData = initialData.collect(days: 30).batch(1000);
+        var optimizer = Adam(learningRate: 0.001);
+        
+        for epoch in 1..100 {
+            for batch in batchedData {
+                var processed = preprocessor(batch);
+                var encoded = encoder(processed);
+                var reconstructed = encoder.decode(encoded);
+                var loss = reconstructionLoss(processed, reconstructed);
+                
+                backward(loss);
+                optimizer.step();
+            }
+        }
+        
+        // Initialize adaptive threshold
+        thresholdLearner.initialize(forward(batchedData.unbatch()));
+    }
+    
+    // Method to update the model with new data
+    @scheduled(interval: 1.day)
+    func updateModel(newData: data.streaming.DataStream<SystemMetrics>) {
+        // Incrementally update the model
+        var batchedData = newData.batch(1000);
+        var optimizer = Adam(learningRate: 0.0001);
+        
+        for epoch in 1..10 {
+            for batch in batchedData {
+                var processed = preprocessor(batch);
+                var encoded = encoder(processed);
+                var reconstructed = encoder.decode(encoded);
+                var loss = reconstructionLoss(processed, reconstructed);
+                
+                backward(loss);
+                optimizer.step();
+            }
+        }
+        
+        // Update threshold based on new data
+        thresholdLearner.update(forward(batchedData.unbatch()));
+    }
+}
+
+// Define automated remediation actions
+@registry(name: "remediation_actions")
+namespace RemediationActions {
+    // Restart a service
+    @action(category: "service", permission: "restart")
+    func restartService(service: string, host: string) -> bool {
+        print("Restarting service {service} on {host}");
+        return sys.remediation.restartService(host, service);
+    }
+    
+    // Clear disk space
+    @action(category: "storage", permission: "modify")
+    func clearTempFiles(host: string, path: string) -> int {
+        print("Clearing temporary files in {path} on {host}");
+        return sys.remediation.clearTemporaryFiles(host, path);
+    }
+    
+    // Reset network connection
+    @action(category: "network", permission: "modify")
+    func resetNetworkConnection(host: string, interface: string) -> bool {
+        print("Resetting network interface {interface} on {host}");
+        return sys.remediation.resetNetworkInterface(host, interface);
+    }
+    
+    // Scale up resources
+    @action(category: "resources", permission: "modify")
+    func scaleUpResources(host: string, resource: string, amount: int) -> bool {
+        print("Scaling up {resource} on {host} by {amount}");
+        return sys.remediation.scaleResource(host, resource, amount);
+    }
+}
+
+// Main monitoring and remediation system
+@continually
+func monitorAndRemediate(clientId: string) {
+    // Load or create the anomaly detection model
+    var model = SystemAnomalyDetector.loadOrCreate("models/client_{clientId}_anomaly.clarity");
+    
+    // Get client configuration
+    var client = client.management.getClient(clientId);
+    var monitoredSystems = client.systems;
+    
+    // Set up metrics stream
+    var metricsStream = sys.monitoring.streamMetrics(
+        systems: monitoredSystems,
+        metrics: ["cpu", "memory", "disk", "network"],
+        interval: 1.minute
+    );
+    
+    // Initial training if needed
+    if model.isNew {
+        var historicalData = sys.monitoring.getHistoricalMetrics(
+            systems: monitoredSystems,
+            metrics: ["cpu", "memory", "disk", "network"],
+            period: 30.days
+        );
+        
+        model.train(historicalData);
+    }
+    
+    // Process incoming metrics
+    for batch in metricsStream.batches(timeWindow: 5.minutes) {
+        // Detect anomalies
+        var anomalyScores = model(batch);
+        var thresholds = model.thresholdLearner.getThresholds();
+        
+        // Find metrics that exceed thresholds
+        var anomalies = anomalyScores > thresholds;
+        
+        if anomalies.any() {
+            // Group anomalies by system and type
+            var groupedAnomalies = groupAnomalies(batch, anomalies, anomalyScores);
+            
+            // For each anomaly, determine and execute remediation
+            for anomaly in groupedAnomalies {
+                var action = determineRemediationAction(anomaly);
+                
+                if action != null {
+                    // Execute remediation with automatic error handling
+                    @recoverable
+                    var result = executeRemediation(action, anomaly);
+                    
+                    // Log the result
+                    logRemediationResult(clientId, anomaly, action, result);
+                    
+                    // Notify if remediation failed
+                    if !result.success {
+                        notifyTechnician(clientId, anomaly, result);
+                    }
+                }
+            }
+        }
+        
+        // Periodically update the model
+        if batch.timestamp.hour == 2 && batch.timestamp.minute == 0 {
+            var recentData = sys.monitoring.getHistoricalMetrics(
+                systems: monitoredSystems,
+                metrics: ["cpu", "memory", "disk", "network"],
+                period: 1.day
+            );
+            
+            model.updateModel(recentData);
+            model.save("models/client_{clientId}_anomaly.clarity");
+        }
+    }
+}
+
+// Helper function to group anomalies
+func groupAnomalies(
+    metrics: tensor<float32[N, features]>,
+    anomalyMask: tensor<bool[N]>,
+    scores: tensor<float32[N]>
+) -> List<AnomalyGroup> {
+    // Group anomalies by system and type
+    var result = List<AnomalyGroup>();
+    var systems = metrics.metadata.systems;
+    var metricTypes = metrics.metadata.metricTypes;
+    
+    for i in 0..N where anomalyMask[i] {
+        var systemIndex = i / metricTypes.length;
+        var metricIndex = i % metricTypes.length;
+        
+        var group = AnomalyGroup {
+            system: systems[systemIndex],
+            metricType: metricTypes[metricIndex],
+            score: scores[i],
+            timestamp: metrics.metadata.timestamp
+        };
+        
+        result.append(group);
+    }
+    
+    return result;
+}
+
+// Start monitoring for all clients
+func main() {
+    var clients = client.management.getAllClients();
+    
+    // Start monitoring process for each client
+    for client in clients {
+        // Run in parallel for each client
+        @async
+        monitorAndRemediate(client.id);
+    }
+    
+    // Keep the main process running
+    while true {
+        sleep(1.hour);
+    }
+}
