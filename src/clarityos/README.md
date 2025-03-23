@@ -38,6 +38,7 @@ ClarityOS reimagines the operating system with these foundational principles:
   - `AI-OS-VISION.md` - Vision document for true AI-native OS
   - `AI-OS-ROADMAP.md` - Implementation roadmap
   - `HARDWARE_LEARNING_PLAN.md` - Plan for hardware learning and integration
+  - `HARDWARE_LEARNING_OVERVIEW.md` - Overview of the hardware learning system
 
 ## Native Boot Process
 
@@ -48,8 +49,9 @@ ClarityOS is designed to boot directly as an operating system through our specia
 3. **Memory Initialization**: Sets up memory management
 4. **Kernel Loading**: Loads AI kernel components
 5. **AI Core Initialization**: Initializes the core AI foundation
-6. **Agent Activation**: Starts system agents
-7. **User Interface Initialization**: Establishes the natural language interface
+6. **Hardware Learning Initialization**: Activates hardware understanding capabilities
+7. **Agent Activation**: Starts system agents
+8. **User Interface Initialization**: Establishes the natural language interface
 
 ### Boot Requirements
 
@@ -78,6 +80,12 @@ ClarityOS includes an advanced hardware learning system that:
 - Optimizes hardware usage based on learned characteristics
 - Provides safe mechanisms for direct hardware interaction
 - Adapts to new hardware without explicit programming
+- Facilitates AI-native boot process with hardware-aware initialization
+- Continuously improves system performance based on hardware knowledge
+- Maintains confidence scores for all hardware knowledge
+- Enables progressive learning through safe experimentation
+
+For more details, see the [Hardware Learning Overview](docs/HARDWARE_LEARNING_OVERVIEW.md) document.
 
 ### AI Init System
 
