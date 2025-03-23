@@ -1,7 +1,6 @@
-<!-- The content from the updated local file -->
 # ClarityOS - AI-Native Operating System
 
-ClarityOS is an ambitious project to create a true AI-native operating system where AI is not just an application or service but the fundamental organizing principle of the entire system. The AI doesn't just run on the OS; the AI *is* the OS.
+ClarityOS is a revolutionary AI-native operating system where AI is not just an application or service but the fundamental organizing principle of the entire system. The AI doesn't just run on the OS; the AI *is* the OS.
 
 ## Core Vision
 
@@ -16,84 +15,69 @@ ClarityOS reimagines the operating system with these foundational principles:
 ## Directory Structure
 
 - `__init__.py` - Package initialization
-- `main.py` - Current main entry point for ClarityOS
+- `boot.py` - Main OS boot sequence entry point
 - `core/` - Core system components
   - `message_bus.py` - Central communication system
   - `agent_manager.py` - Agent lifecycle management
 - `agents/` - AI agent implementations
   - `resource_agent.py` - Resource allocation agent
   - `intent_agent.py` - Natural language understanding agent
+  - `hardware_learning_agent.py` - Hardware learning and optimization agent
+- `hardware/` - Hardware interaction components
+  - `knowledge_repository.py` - Repository for hardware knowledge
+  - `documentation_ingestion.py` - System for processing hardware documentation
+  - `interface_framework.py` - Framework for direct hardware interaction
+  - `interfaces/` - Hardware interface implementations
+  - `safety/` - Safety monitors for hardware interaction
 - `kernel/` - Lower-level OS components
-  - `ai_init/` - AI-driven init system (replacement for systemd/sysvinit)
-  - `ai_sched/` - AI-driven scheduler (future)
-  - `ai_mem/` - AI-driven memory manager (future)
+  - `ai_init/` - AI-driven init system
+  - `ai_sched/` - AI-driven scheduler
+  - `ai_mem/` - AI-driven memory manager
 - `docs/` - Documentation
   - `architecture/` - Architectural specifications
   - `AI-OS-VISION.md` - Vision document for true AI-native OS
   - `AI-OS-ROADMAP.md` - Implementation roadmap
-- `boot_options/` - Scripts for different boot mechanisms
+  - `HARDWARE_LEARNING_PLAN.md` - Plan for hardware learning and integration
 
-## Getting Started
+## Native Boot Process
 
-### Prerequisites
+ClarityOS is designed to boot directly as an operating system through our specialized AI-driven boot process:
 
-- Python 3.7 or higher
-- Required Python packages (install via `pip install -r requirements.txt`)
+1. **Firmware Stage**: Interfaces with system firmware (UEFI/BIOS)
+2. **Hardware Initialization**: Detects and initializes hardware components
+3. **Memory Initialization**: Sets up memory management
+4. **Kernel Loading**: Loads AI kernel components
+5. **AI Core Initialization**: Initializes the core AI foundation
+6. **Agent Activation**: Starts system agents
+7. **User Interface Initialization**: Establishes the natural language interface
 
-### Running ClarityOS
+### Boot Requirements
 
-To start the ClarityOS core manually:
+- **Hardware**: x86-64 CPU with hardware virtualization support (for development)
+- **Memory**: 4GB+ RAM recommended
+- **Storage**: 10GB+ free space
+- **Pre-boot Environment**: UEFI with Secure Boot disabled
+
+### Development Mode
+
+For development purposes, ClarityOS can run within a host OS:
 
 ```bash
-# From the project root directory
-python -m src.clarityos.main
-```
-
-### Boot Options
-
-ClarityOS can be configured to start automatically at system boot using several methods:
-
-#### Windows Options
-
-1. **Windows Service** - Run as a system service (recommended for production)
-   ```powershell
-   # Run as administrator
-   cd src/clarityos/boot_options
-   ./windows_service.ps1
-   ```
-
-2. **Windows Autostart** - Start when user logs in
-   ```powershell
-   cd src/clarityos/boot_options
-   ./windows_autostart.ps1
-   ```
-
-#### Linux Options
-
-1. **SystemD Service** - Run as a system service (recommended for production)
-   ```bash
-   cd src/clarityos/boot_options
-   chmod +x linux_systemd.sh
-   ./linux_systemd.sh
-   ```
-
-2. **User Autostart** - Start when user logs in
-   ```bash
-   cd src/clarityos/boot_options
-   chmod +x linux_user_autostart.sh
-   ./linux_user_autostart.sh
-   ```
-
-#### Docker Deployment
-
-Run ClarityOS in a containerized environment (cross-platform):
-```bash
-cd src/clarityos/boot_options
-chmod +x docker_setup.sh
-./docker_setup.sh
+# Use the development boot loader
+python -m src.clarityos.boot
 ```
 
 ## Key Components
+
+### Hardware Learning System
+
+ClarityOS includes an advanced hardware learning system that:
+
+- Learns about hardware through documentation, observation, and experimentation
+- Creates a comprehensive knowledge base of hardware capabilities and behaviors
+- Optimizes hardware usage based on learned characteristics
+- Provides safe mechanisms for direct hardware interaction
+- Adapts to new hardware without explicit programming
 
 ### AI Init System
 
@@ -113,11 +97,11 @@ The AI Shell replaces traditional command shells with:
 
 ### AI Kernel Integration
 
-Future kernel integration will include:
+ClarityOS includes AI-driven kernel components:
 
-- **AI Scheduler**: Replace the traditional completely fair scheduler (CFS) with an AI-driven scheduler that prioritizes based on learned patterns
-- **AI Memory Manager**: Implement predictive paging and intelligent swapping based on usage patterns
-- **AI I/O Subsystem**: Optimize I/O operations based on learned access patterns
+- **AI Scheduler**: Replaces the traditional completely fair scheduler (CFS) with an AI-driven scheduler that prioritizes based on learned patterns
+- **AI Memory Manager**: Implements predictive paging and intelligent swapping based on usage patterns
+- **AI I/O Subsystem**: Optimizes I/O operations based on learned access patterns
 
 ## Architecture
 
@@ -169,58 +153,17 @@ This diagram illustrates the ClarityOS architecture as a true AI-native OS:
 └───────────────────────────────────────────────────┘
 ```
 
-## Development Status and To-Do List
-
-The ClarityOS project is currently in early development. Here are the key tasks that need to be completed to get the AI system functioning:
-
-### High Priority (Required for Initial Boot)
-
-1. **Complete Message Bus Implementation**: 
-   - Fix the incomplete message_bus.py file
-   - Implement the full publish-subscribe functionality
-   - Add proper message routing and prioritization
-
-2. **Create Requirements File**:
-   - Generate requirements.txt with all needed dependencies
-   - Include AI framework dependencies
-
-3. **Fix Package Structure**:
-   - Create setup.py for proper installation
-   - Fix import paths in existing files
-
-### Medium Priority (Required for Basic Functionality)
-
-4. **Implement AI Integration**:
-   - Connect to an LLM API (OpenAI, Anthropic Claude, etc.)
-   - Or integrate a locally running model
-   - Create AI model configuration/settings management
-
-5. **Develop User Interface**:
-   - Implement a simple CLI interface
-   - Add support for natural language commands
-
-### Lower Priority (Feature Enhancement)
-
-6. **Expand Agent Ecosystem**:
-   - Add more specialized agents
-   - Implement agent learning/improvement mechanisms
-   - Create inter-agent collaboration protocols
-
-7. **System Monitoring and Self-Healing**:
-   - Enhance system monitoring capabilities
-   - Add automated problem detection and resolution
-   - Implement performance optimization
-
 ## Implementation Roadmap
 
 ClarityOS is being developed in phases:
 
-1. **Foundation Phase** (Current)
+1. **Foundation Phase** (Completed)
    - Message bus architecture
    - Agent system framework
-   - Boot options for various platforms
+   - Boot process implementation
 
-2. **AI Core Phase** (In Progress)
+2. **AI Core Phase** (Current)
+   - Hardware learning and adaptation
    - AI Init System implementation
    - AI Shell development
    - System monitoring and learning framework
