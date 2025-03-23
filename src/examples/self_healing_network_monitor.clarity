@@ -1,0 +1,39 @@
+    "performance",
+                    "configuration",
+                    "hardware",
+                    "security",
+                    "capacity"
+                ]
+            }
+        }
+        
+        // Update success rates for action types
+        function updateActionSuccessRates(action: Action, result: ActionResult) {
+            // Get current statistics
+            let stats = Database.connect(config.healthHistory).query(
+                "SELECT * FROM action_statistics WHERE action_type = ?", 
+                action.description
+            )
+            
+            if stats.isEmpty() {
+                // Create new statistics record
+                Database.connect(config.healthHistory).insert("action_statistics", {
+                    action_type: action.description,
+                    attempts: 1,
+                    successes: result.successful ? 1 : 0,
+                    last_updated: now()
+                })
+            } else {
+                // Update existing statistics
+                let current = stats.first()
+                Database.connect(config.healthHistory).execute(
+                    "UPDATE action_statistics SET attempts = ?, successes = ?, last_updated = ? WHERE action_type = ?",
+                    current.attempts + 1,
+                    current.successes + (result.successful ? 1 : 0),
+                    now(),
+                    action.description
+                )
+            }
+        }
+    }
+}
