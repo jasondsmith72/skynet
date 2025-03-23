@@ -50,15 +50,19 @@ ClarityOS is currently in active development with these components:
 - ✅ Agent Manager: Lifecycle management for AI agents
 - ✅ Resource Agent: Basic hardware resource monitoring
 - ✅ Intent Agent: Natural language processing for commands
-- ✅ System Evolution Agent: Self-update capabilities
+- ✅ Boot System: AI-driven boot sequence with hardware initialization
+- ✅ Hardware Interface: Hardware abstraction layer for direct hardware access
+- ✅ Memory Manager: Intelligent memory management with priority allocation
+- ✅ Process Isolation: Security framework with capability-based access control
+- ✅ Learning Framework: System-wide learning capabilities with domain handlers
+- ✅ System Evolution Agent: Self-update capabilities with safety mechanisms
 - ✅ Kernel Updater: For safe critical component updates
 - ✅ Restart Manager: For managing system restarts
 
-Prototype components being developed:
-- 🔄 AI Boot Loader: Direct hardware initialization
-- 🔄 Hardware Bus: Interface between AI and physical hardware
-- 🔄 Learning System: Self-improvement mechanisms
-- 🔄 Talent System: Dynamic capability discovery and execution
+Next components in development:
+- 🔄 Semantic File System: Content-aware file organization
+- 🔄 Core API: Stable interfaces for system components
+- 🔄 Security Framework: Intent-based security model
 
 ## Key Differences from Traditional OS
 
@@ -72,15 +76,16 @@ Unlike traditional operating systems, ClarityOS:
 
 ## Development Roadmap
 
-1. **Current Phase: Core AI Integration**
-   - Enhancing direct hardware interactions
-   - Implementing the boot process for bare-metal operation
-   - Expanding agent capabilities for system management
+1. **Current Phase: Core OS Components** ✅
+   - Implementation of direct hardware interaction
+   - Boot process for system initialization
+   - Memory management and process isolation
+   - Learning framework for system improvement
 
-2. **Next Phase: Native Hardware Layer**
-   - Development of native device drivers
-   - AI-managed memory and process architecture
-   - Security model for AI-driven computing
+2. **Next Phase: Semantic Systems**
+   - Development of semantic file system
+   - AI-driven security framework
+   - Stable core API for integration
 
 3. **Future Phase: Ecosystem Development**
    - Application model for AI-native software
@@ -104,10 +109,10 @@ For development/testing, run ClarityOS within an existing OS:
 python -m src.clarityos.main
 ```
 
-For bare-metal operation (in development):
+For bare-metal operation:
 ```bash
-# Use the boot loader
-python -m src.clarityos.prototype.boot_loader
+# Use the AI boot loader
+python -m src.clarityos.boot
 ```
 
 ## Contributing
@@ -115,11 +120,11 @@ python -m src.clarityos.prototype.boot_loader
 Contributions are welcome! See the [Skynet Project README](../../README.md) for general contribution guidelines.
 
 Current priority areas for contributions:
-1. Hardware abstraction layer for direct hardware access
-2. Boot sequence implementation for different hardware platforms
-3. Memory management for optimal AI operations
-4. Agent development for specialized system functions
-5. Testing on diverse hardware configurations
+1. Semantic file system implementation with content-aware storage
+2. Core API development with stable interfaces and backward compatibility
+3. Security framework with intent-based verification
+4. Documentation and examples for system components
+5. Integration testing between components
 
 ## License
 
