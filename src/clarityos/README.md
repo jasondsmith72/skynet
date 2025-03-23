@@ -25,6 +25,11 @@ ClarityOS reimagines the operating system with these foundational principles:
   - `intent_agent.py` - Natural language understanding agent
   - `hardware_learning_agent.py` - Hardware learning and optimization agent
   - `system_evolution_agent.py` - System update and evolution management
+- `development/` - Self-programming components
+  - `code_understanding.py` - Code analysis and comprehension
+  - `code_generation.py` - Code generation and modification
+  - `environment_integration.py` - Development environment interactions
+  - `examples/` - Demonstration scripts for self-programming
 - `hardware/` - Hardware interaction components
   - `knowledge_repository.py` - Repository for hardware knowledge
   - `documentation_ingestion.py` - System for processing hardware documentation
@@ -42,6 +47,7 @@ ClarityOS reimagines the operating system with these foundational principles:
 - `docs/` - Documentation
   - `IMPLEMENTATION_STATUS.md` - Current implementation status
   - `AI-OS-IMPLEMENTATION-PLAN.md` - Implementation plan
+  - `SELF-PROGRAMMING-ROADMAP.md` - Path to self-programming capabilities
 
 ## Native Boot Process
 
@@ -72,7 +78,35 @@ For hardware learning integration demonstration:
 python -m src.clarityos.boot_integration
 ```
 
+For self-programming capabilities demonstration:
+
+```bash
+# Run the self-programming demonstration
+python -m src.clarityos.development.examples.self_programming_demonstration
+```
+
 ## Key Components
+
+### Self-Programming Capabilities (In Progress 🔄)
+
+The Self-Programming capabilities enable ClarityOS to understand, modify, and extend its own codebase:
+
+- Analyzes its own code structure and patterns
+- Generates new code that integrates with existing architecture
+- Interacts with development environments and version control
+- Tests and validates self-generated code
+- Implements and deploys changes to itself
+
+The Self-Programming capabilities are being implemented with these components:
+- ✅ Code Understanding System - Analyzes and models the codebase
+- ✅ Code Generation System - Creates new code based on specifications and patterns
+- ✅ Environment Integration - Interfaces with Git and build systems
+- 🔄 Self-Improvement Framework - Identifies optimization opportunities
+
+For more details, see:
+- [Development README](development/README.md) - Details about self-programming components
+- [Self-Programming Roadmap](docs/SELF-PROGRAMMING-ROADMAP.md) - Path to full self-programming
+- [Self-Programming Examples](development/examples/README.md) - Demonstrations of the capabilities
 
 ### System Evolution (Implemented ✅)
 
@@ -181,6 +215,14 @@ This diagram illustrates the ClarityOS architecture as a true AI-native OS:
 └───────────────┬───────────────────────────────────┘
                 │
 ┌───────────────▼───────────────────────────────────┐
+│      Self-Programming Capabilities 🔄            │
+│  ┌───────────┐  ┌───────────┐  ┌───────────┐      │
+│  │ Code      │  │ Code      │  │Environment│      │
+│  │Understanding│ Generation │  │Integration│      │
+│  └───────────┘  └───────────┘  └───────────┘      │
+└───────────────┬───────────────────────────────────┘
+                │
+┌───────────────▼───────────────────────────────────┐
 │              AI Kernel Layer 📅                  │
 │  ┌───────────┐  ┌───────────┐  ┌───────────┐      │
 │  │ AI        │  │ AI Memory │  │ AI I/O    │      │
@@ -233,6 +275,7 @@ ClarityOS is being developed in phases:
    - System evolution framework ✅
 
 2. **AI Core Phase** (Current 🔄)
+   - Self-Programming foundations 🔄
    - AI Init System implementation 🔄
    - AI Shell development 📅
    - System monitoring and learning framework 🔄
@@ -251,28 +294,30 @@ ClarityOS is being developed in phases:
 
 ## Next Development Steps
 
-With the System Evolution framework and Hardware Learning System in place, our next priorities are:
+With significant progress on the System Evolution, Hardware Learning, and Self-Programming components, our next priorities are:
 
-1. **Enhance System Evolution Capabilities**
+1. **Enhance Self-Programming Capabilities**
+   - Complete the development of the Self-Improvement Framework
+   - Implement comprehensive validation for self-generated code
+   - Enhance the Environment Integration with deployment automation
+   - Create advanced pattern recognition for code optimization opportunities
+   - Develop a full integration pipeline for self-programming workflow
+
+2. **Enhance System Evolution Capabilities**
    - Complete update validation and verification system
    - Improve rollback capabilities with more comprehensive state preservation
    - Implement differential updates for efficiency
    - Develop self-updating features
 
-2. **Complete the AI Init System**
+3. **Complete the AI Init System**
    - Implement process learning capabilities
    - Develop adaptive optimization based on hardware knowledge
    - Integrate with System Evolution for updateable processes
 
-3. **Begin AI Shell Development**
+4. **Begin AI Shell Development**
    - Develop intent recognition for system commands
    - Implement natural language processing for system management
    - Create context-aware command interpretation
-
-4. **Enhance Hardware Learning System**
-   - Add support for more specialized hardware types
-   - Implement cross-component learning
-   - Develop predictive behavior modeling
 
 5. **Integrate Core Components**
    - Create coherent interactions between all implemented systems
@@ -285,22 +330,24 @@ Contributions are welcome! See the [Skynet Project README](../../README.md) for 
 
 For ClarityOS specific contributions, we currently prioritize:
 
-1. **System Evolution Enhancements**
+1. **Self-Programming Enhancements**
+   - Code understanding improvements for deeper semantic analysis
+   - Code generation capabilities for modifying existing code
+   - Environment integration with CI/CD systems
+   - Test framework for validating generated code
+
+2. **System Evolution Enhancements**
    - Update validation and verification mechanisms
    - Rollback improvements
    - Differential update implementation
 
-2. **AI Init System Components**
+3. **AI Init System Components**
    - Process learning module
    - Resource governance implementation
    - Boot optimization based on hardware knowledge
 
-3. **Hardware Learning Enhancements**
-   - Additional hardware interface implementations
-   - Enhanced safety monitoring for specialized hardware
-   - Improved documentation processing
-
 4. **Testing and Validation**
+   - Self-programming validation tools
    - Update process validation
    - Hardware learning validation tools
    - Performance benchmarking
