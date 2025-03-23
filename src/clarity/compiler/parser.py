@@ -1,185 +1,132 @@
-# Clarity Language Parser
-
-class ClarityLexer:
-    """Tokenizer for Clarity language."""
-    
-    def __init__(self, source_code):
-        self.source = source_code
-        self.pos = 0
-        self.current_char = self.source[0] if source_code else None
-        self.line = 1
-        self.column = 1
-        
-    def advance(self):
-        """Advance the position pointer and set the current_char."""
-        self.pos += 1
-        if self.pos >= len(self.source):
-            self.current_char = None
+(LiteralExpression(value=self.previous().value, type="Boolean"))
+        elif self.match(TokenType.NULL):
+            return Expression(LiteralExpression(value=None, type="Null"))
         else:
-            self.current_char = self.source[self.pos]
-            if self.current_char == '\n':
-                self.line += 1
-                self.column = 1
+            # Simplified: just return a dummy expression
+            return Expression(IdentifierExpression(name="dummy"))
+    
+    def identifier_expression(self) -> Expression:
+        """Parse an identifier expression, which could be a variable, function call, etc."""
+        name = self.previous().value
+        
+        # Check if it's a function call
+        if self.match(TokenType.LEFT_PAREN):
+            # Parse arguments
+            arguments = []
+            
+            if not self.check(TokenType.RIGHT_PAREN):
+                # Parse first argument
+                arguments.append(self.expression())
+                
+                # Parse additional arguments
+                while self.match(TokenType.COMMA):
+                    arguments.append(self.expression())
+            
+            self.consume(TokenType.RIGHT_PAREN, "Expected ')' after arguments")
+            
+            return Expression(CallExpression(
+                callee=IdentifierExpression(name=name),
+                arguments=arguments
+            ))
+        else:
+            # It's a simple identifier
+            return Expression(IdentifierExpression(name=name))
+    
+    def ai_expression(self) -> Expression:
+        """Parse an AI expression (using ai {...})."""
+        # Check for 'ai' keyword
+        self.consume(TokenType.KEYWORD, "Expected 'ai' after 'using'")
+        
+        # Parse AI parameters
+        self.consume(TokenType.LEFT_BRACE, "Expected '{' after 'ai'")
+        
+        properties = {}
+        
+        while not self.check(TokenType.RIGHT_BRACE) and not self.is_at_end():
+            if self.match(TokenType.IDENTIFIER):
+                # Parse property name
+                name = self.previous().value
+                
+                self.consume(TokenType.COLON, "Expected ':' after property name")
+                
+                # Parse property value
+                value = self.expression()
+                
+                properties[name] = value
             else:
-                self.column += 1
-    
-    def tokenize(self):
-        """Convert source code into tokens."""
-        tokens = []
-        
-        while self.current_char is not None:
-            # Handle whitespace
-            if self.current_char.isspace():
-                self.advance()
-                continue
-                
-            # Handle identifiers and keywords
-            if self.current_char.isalpha() or self.current_char == '_':
-                tokens.append(self.extract_identifier())
-                continue
-                
-            # Handle numbers
-            if self.current_char.isdigit():
-                tokens.append(self.extract_number())
-                continue
-                
-            # Handle operators and special characters
-            # This is a simplified implementation
-            tokens.append({
-                'type': 'SYMBOL',
-                'value': self.current_char,
-                'line': self.line,
-                'column': self.column
-            })
-            self.advance()
-            
-        tokens.append({'type': 'EOF', 'value': None, 'line': self.line, 'column': self.column})
-        return tokens
-    
-    def extract_identifier(self):
-        """Extract an identifier from the source code."""
-        start_pos = self.pos
-        start_line = self.line
-        start_column = self.column
-        
-        while (self.current_char is not None and 
-               (self.current_char.isalnum() or self.current_char == '_')):
-            self.advance()
-        
-        value = self.source[start_pos:self.pos]
-        
-        # Check if this is a keyword
-        keywords = {'function', 'if', 'else', 'for', 'while', 'return', 'let', 'const', 'try', 'catch'}
-        token_type = 'KEYWORD' if value in keywords else 'IDENTIFIER'
-        
-        return {
-            'type': token_type,
-            'value': value,
-            'line': start_line,
-            'column': start_column
-        }
-    
-    def extract_number(self):
-        """Extract a number from the source code."""
-        start_pos = self.pos
-        start_line = self.line
-        start_column = self.column
-        
-        while self.current_char is not None and self.current_char.isdigit():
-            self.advance()
-            
-        # Handle decimal numbers
-        if self.current_char == '.':
-            self.advance()
-            while self.current_char is not None and self.current_char.isdigit():
+                # Skip invalid property
                 self.advance()
         
-        value = self.source[start_pos:self.pos]
-        return {
-            'type': 'NUMBER',
-            'value': float(value) if '.' in value else int(value),
-            'line': start_line,
-            'column': start_column
-        }
-
-
-class ClarityParser:
-    """Parser for Clarity language that builds an AST."""
-    
-    def __init__(self, tokens):
-        self.tokens = tokens
-        self.pos = 0
-        self.current_token = tokens[0]
-    
-    def advance(self):
-        """Advance the token pointer."""
-        self.pos += 1
-        if self.pos < len(self.tokens):
-            self.current_token = self.tokens[self.pos]
-            
-    def parse(self):
-        """Parse the token stream into an AST."""
-        # This is a placeholder for a full parser implementation
-        # In a real implementation, we would build a proper AST
-        return {'type': 'Program', 'body': self.parse_statements()}
-    
-    def parse_statements(self):
-        """Parse a sequence of statements."""
-        statements = []
+        self.consume(TokenType.RIGHT_BRACE, "Expected '}' after AI parameters")
         
-        while self.current_token['type'] != 'EOF':
-            statements.append(self.parse_statement())
-            
-        return statements
+        return Expression(AIExpression(
+            kind="using ai",
+            properties=properties
+        ))
     
-    def parse_statement(self):
-        """Parse a single statement."""
-        # This is a simplified implementation for example purposes
-        token = self.current_token
+    # Helper methods for token handling
+    
+    def match(self, *types: TokenType) -> bool:
+        """Check if the current token matches any of the given types.
         
-        if token['type'] == 'KEYWORD':
-            if token['value'] == 'function':
-                return self.parse_function_declaration()
-            elif token['value'] == 'if':
-                return self.parse_if_statement()
-            elif token['value'] == 'return':
-                return self.parse_return_statement()
-            elif token['value'] in ('let', 'const'):
-                return self.parse_variable_declaration()
-                
-        # Assume it's an expression statement
-        expr = self.parse_expression()
+        If it matches, consume the token and return True.
+        Otherwise, leave it alone and return False.
+        """
+        for type in types:
+            if self.check(type):
+                self.advance()
+                return True
         
-        # Placeholder for simplified implementation
+        return False
+    
+    def check(self, type: TokenType) -> bool:
+        """Check if the current token is of the given type."""
+        if self.is_at_end():
+            return False
+        return self.peek().type == type
+    
+    def advance(self) -> Token:
+        """Consume the current token and return it."""
+        if not self.is_at_end():
+            self.current += 1
+        return self.previous()
+    
+    def is_at_end(self) -> bool:
+        """Check if we've reached the end of the token stream."""
+        return self.peek().type == TokenType.EOF
+    
+    def peek(self) -> Token:
+        """Return the current token without consuming it."""
+        return self.tokens[self.current]
+    
+    def previous(self) -> Token:
+        """Return the most recently consumed token."""
+        return self.tokens[self.current - 1]
+    
+    def consume(self, type: TokenType, message: str) -> Token:
+        """Consume the current token if it matches the given type.
+        
+        If it doesn't match, throw a parse error.
+        """
+        if self.check(type):
+            return self.advance()
+        
+        raise ParseError(f"{message} at {self.peek()}")
+    
+    def synchronize(self):
+        """Skip tokens until we reach a statement boundary.
+        
+        Used for error recovery after a parse error.
+        """
         self.advance()
-        return {'type': 'ExpressionStatement', 'expression': expr}
-    
-    def parse_expression(self):
-        """Parse an expression."""
-        # This is a simplified placeholder
-        return {'type': 'Expression', 'token': self.current_token}
-    
-    def parse_function_declaration(self):
-        """Parse a function declaration."""
-        # This is a simplified placeholder
-        self.advance()  # Skip 'function' keyword
-        return {'type': 'FunctionDeclaration', 'token': self.current_token}
-    
-    def parse_if_statement(self):
-        """Parse an if statement."""
-        # This is a simplified placeholder
-        self.advance()  # Skip 'if' keyword
-        return {'type': 'IfStatement', 'token': self.current_token}
-    
-    def parse_return_statement(self):
-        """Parse a return statement."""
-        # This is a simplified placeholder
-        self.advance()  # Skip 'return' keyword
-        return {'type': 'ReturnStatement', 'token': self.current_token}
-    
-    def parse_variable_declaration(self):
-        """Parse a variable declaration."""
-        # This is a simplified placeholder
-        declaration_type = self.current_token['value']  # 'let' or 'const'
-        self.advance()
-        return {'type': 'VariableDeclaration', 'declarationType': declaration_type, 'token': self.current_token}
+        
+        while not self.is_at_end():
+            if self.previous().type == TokenType.SEMICOLON:
+                return
+            
+            if self.peek().type == TokenType.KEYWORD and self.peek().value in [
+                "function", "class", "if", "while", "for", "return"
+            ]:
+                return
+            
+            self.advance()
