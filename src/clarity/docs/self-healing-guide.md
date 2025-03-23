@@ -39,6 +39,27 @@ The healing engine then:
 - Validates the fixed code through virtual execution
 - Learns from successful and unsuccessful healing attempts
 
+## Supported Error Types
+
+Clarity's self-healing system can currently detect and fix the following types of errors:
+
+### Syntax Errors
+- **Missing Semicolons**: Automatically adds missing semicolons at the end of statements
+- **Missing Braces**: (Coming soon) Will detect and add missing braces in control structures
+
+### Reference Errors
+- **Undefined Variables**: Automatically declares undefined variables with appropriate initial values
+- **Undefined Functions**: (Coming soon) Will create stub implementations for undefined functions
+
+### Type Errors
+- **String-Number Conversion**: Automatically adds parseFloat() to convert strings to numbers in arithmetic operations
+- **String Literal to Number**: Converts string literals containing numeric values to actual numbers
+- **Type Mismatches**: Identifies type compatibility issues and adds appropriate conversions
+
+### Logic Errors
+- **Infinite Loops**: (Coming soon) Will detect and fix potential infinite loops
+- **Off-by-One Errors**: (Coming soon) Will identify and correct array index issues and loop boundaries
+
 ## Using Self-Healing in Your Code
 
 ### Intent Declarations
@@ -83,6 +104,40 @@ learn {
         // ...
     }
 }
+```
+
+## Type Conversion Examples
+
+### String-to-Number Conversion
+
+Clarity will automatically detect and fix type mismatches involving strings and numbers:
+
+```clarity
+// Original code with error
+let price = "10";
+let quantity = 5;
+let total = price * quantity;  // TypeError: Cannot multiply string and number
+
+// Automatically healed by Clarity
+let price = "10";
+let quantity = 5;
+let total = parseFloat(price) * quantity;  // Adds parseFloat() to convert string to number
+```
+
+### String Literal Conversion
+
+When a string literal contains a number that should be used in calculations:
+
+```clarity
+// Original code with error
+let price = "10";  // String that should be a number
+let quantity = 5;
+let total = price * quantity;  // TypeError: Cannot multiply string and number
+
+// Automatically healed by Clarity (alternative approach)
+let price = 10;  // Converted to numeric literal
+let quantity = 5;
+let total = price * quantity;  // Now works correctly
 ```
 
 ## Testing Self-Healing
