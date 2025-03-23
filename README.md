@@ -73,7 +73,7 @@ The Skynet Project adheres to several core design principles:
 - **Security by Design**: [Security as a foundational element](docs/concepts/security-by-design.md)
 - **Code Organization**: [Maintainable structure for complex systems](docs/principles/code-organization.md)
 
-## Future Work
+## Future Work and Roadmap
 
 The Skynet Project has several ambitious goals for future development:
 
@@ -86,7 +86,8 @@ The Skynet Project has several ambitious goals for future development:
 - **Ambient Intelligence**: [Distributed intelligence throughout physical spaces](docs/implementation/future-work-areas.md#6-ambient-intelligence-ecosystem)
 - **Cognitive Diversity Adaptation**: [Interfaces that adapt to individual cognitive styles](docs/implementation/future-work-areas.md#7-adaptive-interfaces-for-cognitive-diversity)
 
-[Explore all future work areas](docs/implementation/future-work-areas.md)
+[Explore all future work areas](docs/implementation/future-work-areas.md)  
+[View our strategic roadmap](docs/implementation/strategic-roadmap.md)
 
 ## Contributing
 
