@@ -27,8 +27,12 @@ ClarityOS is an operating system concept built around a unified natural language
 - **Contextual Adaptation**: System behavior that adapts to user needs and context
 - **Semantic Data Organization**: Content-aware file system beyond hierarchical folders
 - **Security and Privacy by Design**: AI-enhanced security with privacy-preserving operations
+- **Self-Healing System**: Automatic detection and repair of system issues
+- **Universal Compatibility**: Run applications from any platform (Windows, Linux, macOS, iOS, Android)
 
-[Learn more about ClarityOS](docs/concepts/ai-driven-os.md)
+[Learn more about ClarityOS](docs/concepts/ai-driven-os.md)  
+[Learn more about Self-Healing](docs/concepts/self-healing-system.md)  
+[Learn more about Universal Compatibility](docs/concepts/universal-compatibility.md)
 
 ### 3. Development Tools
 
@@ -39,7 +43,7 @@ Skynet includes a comprehensive suite of development tools designed for AI-assis
 - **Self-Healing Systems**: Automatic detection and repair of issues
 - **Continuous Learning**: Systems that improve from operational data
 
-[Learn more about AI-Assisted Development](docs/concepts/ai-assisted-development.md)
+[Learn more about AI-Assisted Development](docs/concepts/ai-assisted-development.md)  
 [Learn more about AI-Assisted Development (Part 2)](docs/concepts/ai-assisted-development-part2.md)
 
 ## MSP Applications
@@ -68,6 +72,15 @@ The Skynet Project adheres to several core design principles:
 - **Hardware Maximization**: [Optimal utilization of all computing resources](docs/concepts/maximizing-hardware-utilization.md)
 - **Security by Design**: [Security as a foundational element](docs/concepts/security-by-design.md)
 - **Code Organization**: [Maintainable structure for complex systems](docs/principles/code-organization.md)
+
+## Future Work
+
+The Skynet Project has several ambitious goals for future development:
+
+- **Advanced Self-Healing**: [Virtualized troubleshooting and autonomous system repair](docs/implementation/future-work-advanced-healing.md)
+- **Hardware-Specific Acceleration**: Custom silicon optimized for AI-native programming
+- **Distributed Computing Fabric**: Seamless distribution of workloads across device networks
+- **Neuromorphic Interface Integration**: Direct brain-computer interfaces for intent capture
 
 ## Contributing
 
