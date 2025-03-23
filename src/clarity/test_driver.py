@@ -1,176 +1,179 @@
-#!/usr/bin/env python
-# Test Driver for Clarity Self-Healing System
+"""
+Clarity Programming Language Test Driver
 
-import os
+This script provides a simple CLI for testing the Clarity compiler components.
+It allows lexing, parsing, and semantic analysis of Clarity source files or 
+inline code snippets.
+"""
+
+import argparse
 import sys
-from pathlib import Path
+import os
+from typing import List, Optional, Dict, Any
 
-# Add the src directory to the path
-current_dir = Path(__file__).parent
-src_dir = current_dir.parent
-sys.path.insert(0, str(current_dir))
-sys.path.insert(0, str(src_dir))
-
-from clarity.compiler.parser import ClarityLexer, ClarityParser
-from clarity.runtime.diagnostic_runtime import ClarityDiagnosticRuntime
-from clarity.diagnostics.error_analyzer import ErrorAnalyzer
-from clarity.healing.healing_engine import HealingEngine
+from clarity.compiler.lexer import tokenize, Token, TokenType
+from clarity.compiler.parser import parse
+from clarity.compiler.semantic_analyzer import SemanticAnalyzer, SemanticError
 
 
-def read_clarity_file(filename):
-    """Read a Clarity source file."""
-    file_path = Path(__file__).parent / 'examples' / filename
-    with open(file_path, 'r') as f:
-        return f.read()
+def print_tokens(tokens: List[Token]) -> None:
+    """Print tokens in a readable format."""
+    for token in tokens:
+        print(f"{token.line:4d}:{token.column:2d} {token.type.name:15s} {token.value}")
 
 
-def display_healing_demo(filename):
-    """Demonstrate the self-healing capabilities on a file."""
-    print(f"\n\n{'-'*80}")
-    print(f"Processing file: {filename}\n")
+def test_lexer(source: str) -> List[Token]:
+    """
+    Test the lexer on a source string.
     
-    # Setup components
-    code = read_clarity_file(filename)
-    error_analyzer = ErrorAnalyzer()
-    error_analyzer.load_patterns()
-    healing_engine = HealingEngine(error_analyzer)
-    runtime = ClarityDiagnosticRuntime()
-    
-    # Display original code
-    print("ORIGINAL CODE:")
-    print("-" * 40)
-    print(code)
-    print("-" * 40)
-    
-    # Simulate code execution with errors
-    print("\nSIMULATED EXECUTION:")
-    print("-" * 40)
-    
-    # Simulate lexical analysis
+    Args:
+        source: Clarity source code
+        
+    Returns:
+        List of tokens from the lexer
+    """
+    print("=== LEXER TEST ===")
     try:
-        print("Lexical analysis...")
-        lexer = ClarityLexer(code)
-        tokens = lexer.tokenize()
-        print("  Success! Generated tokens.")
+        tokens = tokenize(source)
+        print_tokens(tokens)
+        return tokens
     except Exception as e:
-        print(f"  Error during lexical analysis: {e}")
+        print(f"Error during lexing: {e}")
+        return []
+
+
+def test_parser(source: str) -> Optional[Any]:
+    """
+    Test the parser on a source string.
     
-    # For demonstration purposes, simulate some errors based on the file
-    errors = []
+    Args:
+        source: Clarity source code
+        
+    Returns:
+        The AST if parsing succeeds, None otherwise
+    """
+    print("\n=== PARSER TEST ===")
+    try:
+        ast = parse(source)
+        print("Parsing successful!")
+        print(f"AST structure: {type(ast).__name__}")
+        print(f"- {len(ast.imports)} imports")
+        print(f"- {len(ast.functions)} functions")
+        print(f"- {len(ast.models)} models")
+        return ast
+    except Exception as e:
+        print(f"Error during parsing: {e}")
+        return None
+
+
+def test_semantic_analyzer(ast: Any) -> List[SemanticError]:
+    """
+    Test the semantic analyzer on an AST.
     
-    if 'error_example.clarity' in filename:
-        # Add simulated errors for the error example file
-        errors.append({
-            "line": 4,
-            "message": "SyntaxError: Missing semicolon",
-            "type": "syntax",
-            "category": "missing_semicolon",
-            "code_snippet": "let total = 0",
-            "context": {"location": {"line": 3}},
-            "match": []
-        })
+    Args:
+        ast: The AST to analyze
         
-        errors.append({
-            "line": 14,
-            "message": "ReferenceError: products is not defined",
-            "type": "reference",
-            "category": "undefined_variable",
-            "code_snippet": "console.log(products);",
-            "match": ["products"]
-        })
-        
-        errors.append({
-            "line": 19,
-            "message": "TypeError: Cannot multiply string and number",
-            "type": "type",
-            "category": "type_mismatch",
-            "code_snippet": "let total = price * quantity;"
-        })
+    Returns:
+        List of semantic errors
+    """
+    print("\n=== SEMANTIC ANALYZER TEST ===")
+    if ast is None:
+        print("No AST to analyze")
+        return []
     
-    # Display simulated errors
-    if errors:
-        print("\nDetected errors:")
-        for i, error in enumerate(errors):
-            print(f"  {i+1}. Line {error['line']}: {error['message']}")
-    else:
-        print("  No errors detected!")
-    
-    # Demonstrate healing
-    if errors:
-        print("\nATTEMPTING SELF-HEALING:")
-        print("-" * 40)
+    try:
+        analyzer = SemanticAnalyzer()
+        errors = analyzer.analyze(ast)
         
-        fixed_code = code
-        successfully_healed = 0
-        
-        for error in errors:
-            print(f"Healing: {error['message']}")
-            
-            if error['type'] == 'syntax' and error['category'] == 'missing_semicolon':
-                result = healing_engine.heal_missing_semicolon(fixed_code, error)
-                if result["success"]:
-                    fixed_code = result["healed_code"]
-                    print(f"  Success! {result['message']}")
-                    successfully_healed += 1
-                else:
-                    print(f"  Failed! {result['message']}")
-            
-            elif error['type'] == 'reference' and error['category'] == 'undefined_variable':
-                result = healing_engine.heal_undefined_variable(fixed_code, error)
-                if result["success"]:
-                    fixed_code = result["healed_code"]
-                    print(f"  Success! {result['message']}")
-                    successfully_healed += 1
-                else:
-                    print(f"  Failed! {result['message']}")
-            
-            elif error['type'] == 'type' and error['category'] == 'type_mismatch':
-                result = healing_engine.heal_type_mismatch(fixed_code, error)
-                if result["success"]:
-                    fixed_code = result["healed_code"]
-                    print(f"  Success! {result['message']}")
-                    successfully_healed += 1
-                else:
-                    print(f"  Failed! {result['message']}")
-                    print(f"  Recommendation: Convert string to number using parseInt or parseFloat")
-        
-        # Show healed code
-        if fixed_code != code:
-            print("\nHEALED CODE:")
-            print("-" * 40)
-            print(fixed_code)
-            print("-" * 40)
-            
-            print("\nSUMMARY:")
-            print("-" * 40)
-            print(f"Successfully healed {successfully_healed} out of {len(errors)} errors")
-            print(f"Self-healing success rate: {successfully_healed/len(errors)*100:.1f}%")
+        if errors:
+            print(f"Found {len(errors)} semantic errors:")
+            for i, error in enumerate(errors, 1):
+                print(f"{i}. Line {error.line}, Column {error.column}: {error.message}")
         else:
-            print("\nNo healing was possible for the detected errors.")
+            print("No semantic errors found!")
+        
+        return errors
+    except Exception as e:
+        print(f"Error during semantic analysis: {e}")
+        return []
 
 
-def main():
-    """Main function to demonstrate the self-healing system."""
-    print("Clarity Self-Healing System Demonstration")
-    print("===========================================\n")
+def process_file(filename: str) -> None:
+    """
+    Process a Clarity source file through the compiler pipeline.
     
-    print("This script demonstrates the self-healing capabilities")
-    print("of the Clarity programming language by simulating error")
-    print("detection and automated correction.\n")
+    Args:
+        filename: Path to the Clarity source file
+    """
+    try:
+        with open(filename, 'r') as f:
+            source = f.read()
+        
+        print(f"Processing file: {filename}")
+        tokens = test_lexer(source)
+        ast = test_parser(source)
+        errors = test_semantic_analyzer(ast)
+        
+        if not errors:
+            print("\nCompilation successful!")
+        else:
+            print(f"\nCompilation failed with {len(errors)} errors.")
     
-    # Demo files
-    display_healing_demo("hello_world.clarity")
-    display_healing_demo("error_example.clarity")
-    display_healing_demo("ai_integration.clarity")
+    except FileNotFoundError:
+        print(f"Error: File not found: {filename}")
+    except Exception as e:
+        print(f"Error processing file: {e}")
+
+
+def process_snippet(snippet: str) -> None:
+    """
+    Process a Clarity code snippet through the compiler pipeline.
     
-    print(f"\n\n{'-'*80}")
-    print("CONCLUSION:")
-    print("-" * 40)
-    print("The Clarity self-healing system can detect and fix various")
-    print("error types, learning from patterns in your code to improve")
-    print("over time. This demonstration shows a simplified version of")
-    print("the system's capabilities.")
-    print("\nFor more information, see the documentation in src/clarity/docs/")
+    Args:
+        snippet: Clarity source code snippet
+    """
+    print("Processing code snippet:")
+    print("---")
+    print(snippet)
+    print("---")
+    
+    tokens = test_lexer(snippet)
+    ast = test_parser(snippet)
+    errors = test_semantic_analyzer(ast)
+    
+    if not errors:
+        print("\nCompilation successful!")
+    else:
+        print(f"\nCompilation failed with {len(errors)} errors.")
+
+
+def main() -> None:
+    """Main entry point for the test driver."""
+    parser = argparse.ArgumentParser(description="Clarity Language Test Driver")
+    
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('-f', '--file', help="Process a Clarity source file")
+    group.add_argument('-c', '--code', help="Process a Clarity code snippet")
+    
+    parser.add_argument('-o', '--output', help="Output file for results (default: stdout)")
+    
+    args = parser.parse_args()
+    
+    # Redirect output if requested
+    if args.output:
+        sys.stdout = open(args.output, 'w')
+    
+    try:
+        if args.file:
+            process_file(args.file)
+        elif args.code:
+            process_snippet(args.code)
+    
+    finally:
+        # Restore stdout if needed
+        if args.output:
+            sys.stdout.close()
+            sys.stdout = sys.__stdout__
 
 
 if __name__ == "__main__":
