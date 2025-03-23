@@ -149,3 +149,39 @@ ResourcePolicy tensor_to_resource_policy(Tensor *tensor) {
     
     return policy;
 }
+
+ProcessAdjustments *tensor_to_process_adjustments(Tensor *tensor) {
+    // In a real implementation, this would convert a tensor to process adjustments
+    // For this prototype, create dummy adjustments
+    
+    ProcessAdjustments *adjustments = malloc(sizeof(ProcessAdjustments));
+    adjustments->num_adjustments = 2;
+    adjustments->adjustments = malloc(sizeof(ProcessAdjustment) * adjustments->num_adjustments);
+    
+    // First adjustment: start a process
+    adjustments->adjustments[0].process = malloc(sizeof(ProcessEntry));
+    strcpy(adjustments->adjustments[0].process->name, "background-service");
+    adjustments->adjustments[0].action = ACTION_START;
+    
+    // Second adjustment: adjust priority
+    adjustments->adjustments[1].process = malloc(sizeof(ProcessEntry));
+    strcpy(adjustments->adjustments[1].process->name, "ai-shell");
+    adjustments->adjustments[1].action = ACTION_ADJUST_PRIORITY;
+    adjustments->adjustments[1].priority = 10;
+    
+    return adjustments;
+}
+
+// Memory management functions
+void free_tensor(Tensor *tensor) {
+    free(tensor->data);
+    free(tensor);
+}
+
+void free_process_adjustments(ProcessAdjustments *adjustments) {
+    for (int i = 0; i < adjustments->num_adjustments; i++) {
+        free(adjustments->adjustments[i].process);
+    }
+    free(adjustments->adjustments);
+    free(adjustments);
+}
