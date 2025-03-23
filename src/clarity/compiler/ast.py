@@ -1,266 +1,269 @@
-#!/usr/bin/env python3
 """
-Abstract Syntax Tree (AST) definitions for the Clarity language.
+Clarity Programming Language Abstract Syntax Tree (AST)
 
-This module defines the node classes that make up the AST for Clarity code.
-These nodes represent the hierarchical structure of Clarity programs after parsing.
+This module defines the AST nodes for the Clarity programming language,
+representing the syntactic structure of programs after parsing.
 """
 
-from typing import List, Dict, Any, Optional, Union, Tuple
 from dataclasses import dataclass, field
+from typing import List, Dict, Optional, Union, Any
 
-# Base AST node class
+
+@dataclass
 class Node:
     """Base class for all AST nodes."""
+    # Location information for error reporting
+    line: int = 0
+    column: int = 0
+    
+
+@dataclass
+class Identifier(Node):
+    """Represents an identifier (variable name, function name, etc.)."""
+    name: str = ""
+
+
+@dataclass
+class Literal(Node):
+    """Base class for literal values (int, float, string, bool)."""
     pass
 
-@dataclass
-class Parameter:
-    """Function or method parameter."""
-    name: str
-    type: str
-    optional: bool = False
-    default_value: Optional['Expression'] = None
 
 @dataclass
-class VariantParameter:
-    """Parameter for enum variant."""
-    name: str
-    type: str
+class IntLiteral(Literal):
+    """Represents an integer literal."""
+    value: int = 0
+
 
 @dataclass
-class EnumVariant:
-    """Enum variant definition."""
-    name: str
-    parameters: List[VariantParameter] = field(default_factory=list)
+class FloatLiteral(Literal):
+    """Represents a floating-point literal."""
+    value: float = 0.0
+
 
 @dataclass
-class Property:
-    """Class or type property."""
-    name: str
-    type: str
-    optional: bool = False
-    default_value: Optional['Expression'] = None
+class StringLiteral(Literal):
+    """Represents a string literal."""
+    value: str = ""
+
 
 @dataclass
-class AgentPermissions:
-    """Agent permissions definition."""
-    can_read: List[str] = field(default_factory=list)
-    can_write: List[str] = field(default_factory=list)
-    can_call: List[str] = field(default_factory=list)
+class BoolLiteral(Literal):
+    """Represents a boolean literal."""
+    value: bool = False
+
 
 @dataclass
-class AgentConstraints:
-    """Agent constraints definition."""
-    max_response_time: Optional[str] = None
-    must_escalate_when: List[str] = field(default_factory=list)
-    response_style_source: Optional[str] = None
+class TypeAnnotation(Node):
+    """Base class for type annotations."""
+    pass
+
 
 @dataclass
-class Range:
-    """Range for for-range loops."""
-    start: 'Expression'
-    end: 'Expression'
-    step: Optional['Expression'] = None
+class SimpleType(TypeAnnotation):
+    """Simple type like int, float, bool, string."""
+    name: str = ""
+
 
 @dataclass
-class CatchClause:
-    """Catch clause in try-catch statement."""
-    error_type: str
-    binding: Optional[str] = None
-    body: 'BlockStatement' = None
+class TensorType(TypeAnnotation):
+    """Tensor type with element type and shape information."""
+    element_type: TypeAnnotation = field(default_factory=lambda: SimpleType())
+    shape: List[Union[int, str]] = field(default_factory=list)
+
 
 @dataclass
-class RecoveryStrategy:
-    """Recovery strategy for service error handling."""
-    error_type: str
-    strategies: List[Any] = field(default_factory=list)
+class ProbabilisticType(TypeAnnotation):
+    """Probabilistic type with underlying type."""
+    base_type: TypeAnnotation = field(default_factory=lambda: SimpleType())
+    distribution: Optional['Expression'] = None
+
 
 @dataclass
-class EventHandler:
-    """Event handler in a service."""
-    event_name: str
-    parameters: List[str]
-    body: 'BlockStatement' = None
+class GradientType(TypeAnnotation):
+    """Gradient-tracking type with underlying type."""
+    base_type: TypeAnnotation = field(default_factory=lambda: SimpleType())
+
 
 @dataclass
-class ScheduledTask:
-    """Scheduled task in a service."""
-    schedule: str
-    body: 'BlockStatement' = None
+class Expression(Node):
+    """Base class for all expressions."""
+    pass
 
-# Program structure
-@dataclass
-class Program(Node):
-    """Root node of the AST representing a complete program."""
-    declarations: List[Node] = field(default_factory=list)
-
-# Declarations
-@dataclass
-class FunctionDeclaration(Node):
-    """Function declaration node."""
-    name: str
-    parameters: List[Parameter] = field(default_factory=list)
-    return_type: Optional[str] = None
-    body: 'BlockStatement' = None
-    throws: bool = False
-    throws_types: List[str] = field(default_factory=list)
-    async_function: bool = False
-    intent: Optional[str] = None
 
 @dataclass
-class VariableDeclaration(Node):
-    """Variable declaration node."""
-    kind: str  # 'let' or 'const'
-    name: str
-    type_annotation: Optional[str] = None
-    initializer: Optional['Expression'] = None
+class BinaryOperation(Expression):
+    """Binary operation (e.g., a + b, x * y)."""
+    left: Expression = field(default_factory=lambda: Expression())
+    operator: str = ""
+    right: Expression = field(default_factory=lambda: Expression())
+
 
 @dataclass
-class ClassDeclaration(Node):
-    """Class declaration node."""
-    name: str
-    superclass: Optional[str] = None
-    interfaces: List[str] = field(default_factory=list)
-    properties: List[Property] = field(default_factory=list)
-    constructor: Optional[FunctionDeclaration] = None
-    methods: List[FunctionDeclaration] = field(default_factory=list)
+class UnaryOperation(Expression):
+    """Unary operation (e.g., -x, !condition)."""
+    operator: str = ""
+    operand: Expression = field(default_factory=lambda: Expression())
+
 
 @dataclass
-class InterfaceDeclaration(Node):
-    """Interface declaration node."""
-    name: str
-    methods: List[FunctionDeclaration] = field(default_factory=list)
+class VariableReference(Expression):
+    """Reference to a variable."""
+    name: Identifier = field(default_factory=lambda: Identifier())
+
 
 @dataclass
-class TypeDeclaration(Node):
-    """Type declaration node."""
-    name: str
-    type_kind: str = "struct"  # 'struct', 'enum', etc.
-    properties: List[Property] = field(default_factory=list)
-    variants: List[EnumVariant] = field(default_factory=list)
+class FunctionCall(Expression):
+    """Function or method call."""
+    function: Expression = field(default_factory=lambda: Expression())
+    arguments: List[Expression] = field(default_factory=list)
+
 
 @dataclass
-class AgentDeclaration(Node):
-    """Agent declaration node."""
-    name: str
-    permissions: Optional[AgentPermissions] = None
-    capabilities: List[FunctionDeclaration] = field(default_factory=list)
-    constraints: Optional[AgentConstraints] = None
+class ModelCall(Expression):
+    """Model inference call (similar to function call but specific to models)."""
+    model: Expression = field(default_factory=lambda: Expression())
+    inputs: List[Expression] = field(default_factory=list)
+
 
 @dataclass
-class ServiceDeclaration(Node):
-    """Service declaration node."""
-    name: str
-    config: List[Property] = field(default_factory=list)
-    functions: List[FunctionDeclaration] = field(default_factory=list)
-    recovery_strategies: List[RecoveryStrategy] = field(default_factory=list)
-    event_handlers: List[EventHandler] = field(default_factory=list)
-    scheduled_tasks: List[ScheduledTask] = field(default_factory=list)
+class MemberAccess(Expression):
+    """Access to an object member (e.g., object.field)."""
+    object: Expression = field(default_factory=lambda: Expression())
+    member: Identifier = field(default_factory=lambda: Identifier())
 
-# Statements
+
+@dataclass
+class ArrayAccess(Expression):
+    """Array/tensor indexing (e.g., array[index])."""
+    array: Expression = field(default_factory=lambda: Expression())
+    indices: List[Expression] = field(default_factory=list)
+
+
 @dataclass
 class Statement(Node):
-    """Base class for all statement nodes."""
+    """Base class for all statements."""
     pass
 
+
 @dataclass
-class BlockStatement(Statement):
+class ExpressionStatement(Statement):
+    """Statement consisting of a single expression."""
+    expression: Expression = field(default_factory=lambda: Expression())
+
+
+@dataclass
+class VariableDeclaration(Statement):
+    """Variable declaration statement."""
+    name: Identifier = field(default_factory=lambda: Identifier())
+    type_annotation: Optional[TypeAnnotation] = None
+    initializer: Optional[Expression] = None
+
+
+@dataclass
+class Assignment(Statement):
+    """Assignment statement."""
+    target: Expression = field(default_factory=lambda: Expression())
+    value: Expression = field(default_factory=lambda: Expression())
+
+
+@dataclass
+class Block(Statement):
     """Block of statements."""
     statements: List[Statement] = field(default_factory=list)
 
+
 @dataclass
 class IfStatement(Statement):
-    """If statement node."""
-    test: 'Expression'
-    consequent: BlockStatement
-    alternate: Optional[Union[BlockStatement, 'IfStatement']] = None
-    is_guard: bool = False
+    """If statement with optional else block."""
+    condition: Expression = field(default_factory=lambda: Expression())
+    then_block: Block = field(default_factory=lambda: Block())
+    else_block: Optional[Block] = None
+
 
 @dataclass
-class ForStatement(Statement):
-    """For loop statement node."""
-    kind: str  # 'for-in', 'for-range'
-    variable: str
-    iterable: Optional['Expression'] = None  # For 'for-in'
-    range: Optional[Range] = None  # For 'for-range'
-    body: BlockStatement = None
+class WhileLoop(Statement):
+    """While loop."""
+    condition: Expression = field(default_factory=lambda: Expression())
+    body: Block = field(default_factory=lambda: Block())
+
 
 @dataclass
-class WhileStatement(Statement):
-    """While loop statement node."""
-    test: 'Expression'
-    body: BlockStatement = None
+class ForLoop(Statement):
+    """For loop."""
+    initializer: Optional[Statement] = None
+    condition: Optional[Expression] = None
+    update: Optional[Statement] = None
+    body: Block = field(default_factory=lambda: Block())
 
-@dataclass
-class SwitchStatement(Statement):
-    """Switch statement node."""
-    discriminant: 'Expression'
-    cases: List[Dict[str, Any]] = field(default_factory=list)
 
 @dataclass
 class ReturnStatement(Statement):
-    """Return statement node."""
-    expression: Optional['Expression'] = None
+    """Return statement."""
+    value: Optional[Expression] = None
+
 
 @dataclass
-class ThrowStatement(Statement):
-    """Throw statement node."""
-    error: 'Expression'
+class ImportStatement(Statement):
+    """Import statement."""
+    module: Identifier = field(default_factory=lambda: Identifier())
+    elements: List[Identifier] = field(default_factory=list)
+
 
 @dataclass
-class TryCatchStatement(Statement):
-    """Try-catch statement node."""
-    try_block: BlockStatement
-    catch_clauses: List[CatchClause] = field(default_factory=list)
-    finally_block: Optional[BlockStatement] = None
+class ConcurrentBlock(Statement):
+    """Concurrent execution block."""
+    statements: List[Statement] = field(default_factory=list)
 
-# Expressions
-@dataclass
-class Expression(Node):
-    """Base class for all expression nodes."""
-    expression: Any = None
 
 @dataclass
-class BinaryExpression(Expression):
-    """Binary expression node."""
-    operator: str
-    left: Expression
-    right: Expression
+class Parameter(Node):
+    """Function or model parameter."""
+    name: Identifier = field(default_factory=lambda: Identifier())
+    type_annotation: Optional[TypeAnnotation] = None
+    default_value: Optional[Expression] = None
+
 
 @dataclass
-class UnaryExpression(Expression):
-    """Unary expression node."""
-    operator: str
-    argument: Expression
-    prefix: bool = True
+class FunctionDeclaration(Node):
+    """Function declaration."""
+    name: Identifier = field(default_factory=lambda: Identifier())
+    parameters: List[Parameter] = field(default_factory=list)
+    return_type: Optional[TypeAnnotation] = None
+    body: Block = field(default_factory=lambda: Block())
+    decorators: List[str] = field(default_factory=list)
+
 
 @dataclass
-class CallExpression(Expression):
-    """Function call expression node."""
-    callee: Union['IdentifierExpression', 'MemberExpression']
+class LayerDefinition(Node):
+    """Neural network layer definition."""
+    name: Identifier = field(default_factory=lambda: Identifier())
+    layer_type: Identifier = field(default_factory=lambda: Identifier())
     arguments: List[Expression] = field(default_factory=list)
 
-@dataclass
-class MemberExpression(Expression):
-    """Member access expression node."""
-    object: Union['IdentifierExpression', 'MemberExpression', 'CallExpression']
-    property: str
-    computed: bool = False  # Whether property is accessed via [] notation
 
 @dataclass
-class IdentifierExpression(Expression):
-    """Identifier expression node."""
-    name: str
+class ForwardPassDefinition(Node):
+    """Model forward pass definition."""
+    parameters: List[Parameter] = field(default_factory=list)
+    return_type: Optional[TypeAnnotation] = None
+    body: Block = field(default_factory=lambda: Block())
+
 
 @dataclass
-class LiteralExpression(Expression):
-    """Literal value expression node."""
-    value: Any
-    type: str = ""  # The Clarity type of the literal
+class ModelDeclaration(Node):
+    """Model declaration."""
+    name: Identifier = field(default_factory=lambda: Identifier())
+    layers: List[LayerDefinition] = field(default_factory=list)
+    components: List[LayerDefinition] = field(default_factory=list)  # For ensemble models
+    forward_pass: ForwardPassDefinition = field(default_factory=lambda: ForwardPassDefinition())
+    train_method: Optional[FunctionDeclaration] = None
+    decorators: List[str] = field(default_factory=list)
+
 
 @dataclass
-class AIExpression(Expression):
-    """AI expression node for using AI integrations."""
-    kind: str  # 'using ai', etc.
-    properties: Dict[str, Any] = field(default_factory=dict)
+class Program(Node):
+    """Root node representing a complete Clarity program."""
+    imports: List[ImportStatement] = field(default_factory=list)
+    functions: List[FunctionDeclaration] = field(default_factory=list)
+    models: List[ModelDeclaration] = field(default_factory=list)
