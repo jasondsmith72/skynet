@@ -1,131 +1,252 @@
-# ClarityOS - AI as the Operating System
+<!-- The content from the updated local file -->
+# ClarityOS - AI-Native Operating System
 
-ClarityOS represents a revolutionary approach to computing where the AI **is** the operating system rather than just an application running on it. This paradigm shift places artificial intelligence at the core of the computing experience, where the AI directly manages hardware resources, user interactions, and software execution.
+ClarityOS is an ambitious project to create a true AI-native operating system where AI is not just an application or service but the fundamental organizing principle of the entire system. The AI doesn't just run on the OS; the AI *is* the OS.
 
 ## Core Vision
 
-ClarityOS reimagines the computer operating system with these foundational principles:
+ClarityOS reimagines the operating system with these foundational principles:
 
-- **AI as the Primary Interface**: The AI directly interfaces with hardware and serves as the primary user interface
-- **Intent-Based Computing**: Users express their needs in natural language, and the AI determines how to fulfill them
-- **Dynamic Resource Management**: System resources are allocated by the AI based on learning and context
-- **Context-Aware Computing**: The system understands user context and adapts behavior accordingly
-- **Self-Evolution**: The OS improves itself through learning and self-modification
+- **AI as the OS**: The AI is the fundamental organizing principle, not just an add-on
+- **Intent-Based Computing**: Users express intent rather than commands, and the AI determines how to fulfill it
+- **Adaptive Resource Management**: System resources are allocated dynamically based on learning rather than static policies
+- **Contextual Understanding**: The system understands the user's context and adapts accordingly
+- **Self-Evolution**: The OS improves itself over time through learning from system and user behaviors
 
-## Current Architecture
+## Directory Structure
 
-ClarityOS is built on a flexible, modular architecture:
-
-- **AI Core** - The central intelligence that coordinates the entire system
-  - Foundation Model integration for reasoning and task understanding
-  - Learning system for continuous improvement
-  - Context management for maintaining state and history
-
-- **Message Bus** - The central nervous system of ClarityOS
-  - Event-driven architecture for decoupled components
-  - Priority-based message routing
-  - Request-response patterns for synchronous operations
-
-- **Agent System** - Specialized AI components handling specific domains
-  - Resource Agent: Monitors and optimizes hardware resources
-  - Intent Agent: Processes natural language into system actions
-  - System Evolution Agent: Manages system updates and self-improvement
-  - Extensible framework for domain-specific agents
-
-## Boot Process
-
-ClarityOS can boot directly as the operating system through a specialized boot process:
-
-1. **AI Initial Boot**: The core AI components load during system startup
-2. **Hardware Discovery**: The AI identifies and initializes available hardware
-3. **Resource Allocation**: Memory, processing, and storage resources are allocated
-4. **Agent Activation**: Specialized agents are activated based on system needs
-5. **User Interface Initialization**: Natural language and other interfaces are established
-
-## Implementation Status
-
-ClarityOS is currently in active development with these components:
-
-- ✅ Message Bus: The core communication system
-- ✅ Agent Manager: Lifecycle management for AI agents
-- ✅ Resource Agent: Basic hardware resource monitoring
-- ✅ Intent Agent: Natural language processing for commands
-- ✅ Boot System: AI-driven boot sequence with hardware initialization
-- ✅ Hardware Interface: Hardware abstraction layer for direct hardware access
-- ✅ Memory Manager: Intelligent memory management with priority allocation
-- ✅ Process Isolation: Security framework with capability-based access control
-- ✅ Learning Framework: System-wide learning capabilities with domain handlers
-- ✅ System Evolution Agent: Self-update capabilities with safety mechanisms
-- ✅ Kernel Updater: For safe critical component updates
-- ✅ Restart Manager: For managing system restarts
-
-Next components in development:
-- 🔄 Semantic File System: Content-aware file organization
-- 🔄 Core API: Stable interfaces for system components
-- 🔄 Security Framework: Intent-based security model
-
-## Key Differences from Traditional OS
-
-Unlike traditional operating systems, ClarityOS:
-
-1. **No Command Line or GUI Shell**: The primary interface is natural language
-2. **Adaptive Resource Management**: Resources are allocated based on learning, not static policies
-3. **Self-Modification**: The system can safely modify its own code to improve
-4. **Contextual Understanding**: Actions are interpreted based on user history and context
-5. **Intent-Based**: Users express what they want to accomplish, not how to do it
-
-## Development Roadmap
-
-1. **Current Phase: Core OS Components** ✅
-   - Implementation of direct hardware interaction
-   - Boot process for system initialization
-   - Memory management and process isolation
-   - Learning framework for system improvement
-
-2. **Next Phase: Semantic Systems**
-   - Development of semantic file system
-   - AI-driven security framework
-   - Stable core API for integration
-
-3. **Future Phase: Ecosystem Development**
-   - Application model for AI-native software
-   - Developer tools for AI-OS integration
-   - User identity and personalization framework
+- `__init__.py` - Package initialization
+- `main.py` - Current main entry point for ClarityOS
+- `core/` - Core system components
+  - `message_bus.py` - Central communication system
+  - `agent_manager.py` - Agent lifecycle management
+- `agents/` - AI agent implementations
+  - `resource_agent.py` - Resource allocation agent
+  - `intent_agent.py` - Natural language understanding agent
+- `kernel/` - Lower-level OS components
+  - `ai_init/` - AI-driven init system (replacement for systemd/sysvinit)
+  - `ai_sched/` - AI-driven scheduler (future)
+  - `ai_mem/` - AI-driven memory manager (future)
+- `docs/` - Documentation
+  - `architecture/` - Architectural specifications
+  - `AI-OS-VISION.md` - Vision document for true AI-native OS
+  - `AI-OS-ROADMAP.md` - Implementation roadmap
+- `boot_options/` - Scripts for different boot mechanisms
 
 ## Getting Started
 
-### Requirements
+### Prerequisites
 
-- Python 3.9+
-- Foundation model access (API keys or local models)
-- Hardware with sufficient computing resources for AI operations
+- Python 3.7 or higher
+- Required Python packages (install via `pip install -r requirements.txt`)
 
-### Quick Start
+### Running ClarityOS
 
-For development/testing, run ClarityOS within an existing OS:
+To start the ClarityOS core manually:
 
 ```bash
 # From the project root directory
 python -m src.clarityos.main
 ```
 
-For bare-metal operation:
+### Boot Options
+
+ClarityOS can be configured to start automatically at system boot using several methods:
+
+#### Windows Options
+
+1. **Windows Service** - Run as a system service (recommended for production)
+   ```powershell
+   # Run as administrator
+   cd src/clarityos/boot_options
+   ./windows_service.ps1
+   ```
+
+2. **Windows Autostart** - Start when user logs in
+   ```powershell
+   cd src/clarityos/boot_options
+   ./windows_autostart.ps1
+   ```
+
+#### Linux Options
+
+1. **SystemD Service** - Run as a system service (recommended for production)
+   ```bash
+   cd src/clarityos/boot_options
+   chmod +x linux_systemd.sh
+   ./linux_systemd.sh
+   ```
+
+2. **User Autostart** - Start when user logs in
+   ```bash
+   cd src/clarityos/boot_options
+   chmod +x linux_user_autostart.sh
+   ./linux_user_autostart.sh
+   ```
+
+#### Docker Deployment
+
+Run ClarityOS in a containerized environment (cross-platform):
 ```bash
-# Use the AI boot loader
-python -m src.clarityos.boot
+cd src/clarityos/boot_options
+chmod +x docker_setup.sh
+./docker_setup.sh
 ```
+
+## Key Components
+
+### AI Init System
+
+The AI Init System is a fundamental shift from traditional init systems:
+
+- **Process Lifecycle Management**: Intelligently starts, stops, and manages processes based on learned patterns and current needs
+- **Resource Governance**: Allocates resources based on learned importance rather than static priorities
+- **Adaptive Optimization**: Continuously improves boot and runtime performance through learning
+
+### AI Shell
+
+The AI Shell replaces traditional command shells with:
+
+- **Natural Language Understanding**: Control the system through natural language rather than command syntax
+- **Intent Resolution**: Determine user intent and map to appropriate system operations
+- **Contextual Awareness**: Understand commands in the context of user history and system state
+
+### AI Kernel Integration
+
+Future kernel integration will include:
+
+- **AI Scheduler**: Replace the traditional completely fair scheduler (CFS) with an AI-driven scheduler that prioritizes based on learned patterns
+- **AI Memory Manager**: Implement predictive paging and intelligent swapping based on usage patterns
+- **AI I/O Subsystem**: Optimize I/O operations based on learned access patterns
+
+## Architecture
+
+This diagram illustrates the ClarityOS architecture as a true AI-native OS:
+
+```
+┌───────────────────────────────────────────────────┐
+│                System Hardware                    │
+└───────────────┬───────────────────────────────────┘
+                │
+┌───────────────▼───────────────────────────────────┐
+│              AI Kernel Layer                      │
+│  ┌───────────┐  ┌───────────┐  ┌───────────┐      │
+│  │ AI        │  │ AI Memory │  │ AI I/O    │      │
+│  │ Scheduler │  │ Manager   │  │ Subsystem │      │
+│  └───────────┘  └───────────┘  └───────────┘      │
+└───────────────┬───────────────────────────────────┘
+                │
+┌───────────────▼───────────────────────────────────┐
+│              AI Init System                       │
+│  ┌───────────┐  ┌───────────┐  ┌───────────┐      │
+│  │ Process   │  │ Resource  │  │Dependency │      │
+│  │ Lifecycle │  │ Governor  │  │ Resolver  │      │
+│  └───────────┘  └───────────┘  └───────────┘      │
+└───────────────┬───────────────────────────────────┘
+                │
+┌───────────────▼───────────────────────────────────┐
+│           System & User Services                  │
+│  ┌───────────┐  ┌───────────┐  ┌───────────┐      │
+│  │ File      │  │ Network   │  │ Security  │      │
+│  │ System    │  │ Stack     │  │ Services  │      │
+│  └───────────┘  └───────────┘  └───────────┘      │
+└───────────────┬───────────────────────────────────┘
+                │
+┌───────────────▼───────────────────────────────────┐
+│              Message Bus                          │
+└───────────────┬───────────────────────────────────┘
+                │
+┌───────────────▼───────────────────────────────────┐
+│              User Interface Layer                 │
+│  ┌───────────┐  ┌───────────┐  ┌───────────┐      │
+│  │ AI        │  │ Adaptive  │  │ Intent    │      │
+│  │ Shell     │  │ GUI       │  │ Resolver  │      │
+│  └───────────┘  └───────────┘  └───────────┘      │
+└───────────────┬───────────────────────────────────┘
+                │
+┌───────────────▼───────────────────────────────────┐
+│              Applications                         │
+└───────────────────────────────────────────────────┘
+```
+
+## Development Status and To-Do List
+
+The ClarityOS project is currently in early development. Here are the key tasks that need to be completed to get the AI system functioning:
+
+### High Priority (Required for Initial Boot)
+
+1. **Complete Message Bus Implementation**: 
+   - Fix the incomplete message_bus.py file
+   - Implement the full publish-subscribe functionality
+   - Add proper message routing and prioritization
+
+2. **Create Requirements File**:
+   - Generate requirements.txt with all needed dependencies
+   - Include AI framework dependencies
+
+3. **Fix Package Structure**:
+   - Create setup.py for proper installation
+   - Fix import paths in existing files
+
+### Medium Priority (Required for Basic Functionality)
+
+4. **Implement AI Integration**:
+   - Connect to an LLM API (OpenAI, Anthropic Claude, etc.)
+   - Or integrate a locally running model
+   - Create AI model configuration/settings management
+
+5. **Develop User Interface**:
+   - Implement a simple CLI interface
+   - Add support for natural language commands
+
+### Lower Priority (Feature Enhancement)
+
+6. **Expand Agent Ecosystem**:
+   - Add more specialized agents
+   - Implement agent learning/improvement mechanisms
+   - Create inter-agent collaboration protocols
+
+7. **System Monitoring and Self-Healing**:
+   - Enhance system monitoring capabilities
+   - Add automated problem detection and resolution
+   - Implement performance optimization
+
+## Implementation Roadmap
+
+ClarityOS is being developed in phases:
+
+1. **Foundation Phase** (Current)
+   - Message bus architecture
+   - Agent system framework
+   - Boot options for various platforms
+
+2. **AI Core Phase** (In Progress)
+   - AI Init System implementation
+   - AI Shell development
+   - System monitoring and learning framework
+
+3. **Kernel Integration Phase** (Planned)
+   - AI scheduler modules
+   - Memory management subsystem
+   - I/O prioritization system
+
+4. **Complete AI OS Phase** (Future)
+   - Full system integration
+   - Learning algorithms across the stack
+   - Developer APIs for AI-native applications
+   - Talent-based AI orchestration system where the core OS AI can run and control specialized AI agents based on their expertise
+
+For more details, see the [AI-OS-ROADMAP.md](docs/AI-OS-ROADMAP.md) document.
 
 ## Contributing
 
 Contributions are welcome! See the [Skynet Project README](../../README.md) for general contribution guidelines.
 
-Current priority areas for contributions:
-1. Semantic file system implementation with content-aware storage
-2. Core API development with stable interfaces and backward compatibility
-3. Security framework with intent-based verification
-4. Documentation and examples for system components
-5. Integration testing between components
+For ClarityOS specific contributions:
 
-## License
+1. Focus on the AI-native OS components described in the vision document
+2. Work on the components identified in the roadmap
+3. Improve the AI decision-making capabilities
+4. Enhance the integration between the AI and kernel/system components
 
-[MIT License](LICENSE)
+See the [AI-OS-VISION.md](docs/AI-OS-VISION.md) document for more details on the project vision.
