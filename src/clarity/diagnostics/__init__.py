@@ -1,0 +1,1 @@
+# Clarity diagnostics package initialization
