@@ -1,0 +1,22 @@
+# Skynet Project Requirements
+
+# Core dependencies
+python>=3.7
+
+# Testing
+pytest>=6.0.0
+pytest-cov>=2.12.0
+
+# Development tools
+black>=21.5b2  # Code formatting
+flake8>=3.9.2  # Linting
+mypy>=0.812    # Type checking
+
+# Documentation
+Sphinx>=4.0.2
+sphinx-rtd-theme>=0.5.2
+
+# Runtime dependencies
+numpy>=1.20.0  # For numerical operations
+pandas>=1.2.0  # For data handling in AI-related features
+sklearn>=0.24.0  # For machine learning components
