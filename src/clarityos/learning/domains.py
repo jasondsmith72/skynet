@@ -1,210 +1,416 @@
 """
 Learning Domains for ClarityOS
 
-This module implements domain-specific learning handlers for the ClarityOS learning framework.
+This module defines the learning domains supported by ClarityOS and provides
+domain-specific learning handlers for the AI system.
 """
 
 import logging
-from typing import Dict, List, Any, Callable
-
-from clarityos.core.learning_framework import LearningDomain
+from enum import Enum, auto
+from typing import Dict, List, Any, Callable, Optional
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
 
-async def system_learning(data: Dict[str, Any], task_type: str) -> Dict[str, Any]:
-    """System domain learning implementation."""
-    logger.info(f"Processing system learning task: {task_type}")
+class LearningDomain(Enum):
+    """Enumeration of learning domains in ClarityOS."""
     
-    if task_type == "resource_usage":
-        # Analyze resource usage patterns
-        if "usage_history" in data:
-            usage_history = data["usage_history"]
-            
-            # Simple pattern recognition - find peak usage times
-            peak_times = []
-            for entry in usage_history:
-                if entry.get("usage", 0) > 80:  # >80% usage is considered peak
-                    peak_times.append(entry.get("timestamp"))
-            
-            return {
-                "pattern_found": len(peak_times) > 0,
-                "pattern_type": "resource_peak",
-                "peak_times_count": len(peak_times),
-                "resource_type": data.get("resource_type", "unknown")
-            }
+    # System optimization domains
+    PERFORMANCE = auto()     # Performance optimization
+    STABILITY = auto()       # System stability and error reduction
+    RESOURCE = auto()        # Resource allocation and management
     
-    elif task_type == "performance_optimization":
-        # Identify performance bottlenecks
-        return {
-            "optimizations_found": True,
-            "recommendations": [
-                "Increase cache size for frequently accessed data",
-                "Optimize parallel processing for compute-intensive tasks"
-            ]
+    # Security domains
+    SECURITY = auto()        # System security and threat detection
+    PRIVACY = auto()         # User privacy protection
+    
+    # User experience domains
+    USER_INTERACTION = auto()  # User interface and experience
+    INTENT = auto()            # User intent understanding
+    
+    # Infrastructure domains
+    HARDWARE = auto()        # Hardware interaction and optimization
+    NETWORK = auto()         # Network optimization
+    STORAGE = auto()         # Storage optimization
+    
+    # Application domains
+    APPLICATION = auto()     # Application behavior and optimization
+    INTEGRATION = auto()     # System integration with external components
+    
+    # Knowledge domains
+    KNOWLEDGE = auto()       # System knowledge base expansion
+    REASONING = auto()       # Reasoning and decision making
+
+
+class DomainMetrics:
+    """
+    Defines metrics and thresholds for different learning domains.
+    These metrics are used to measure system performance and identify 
+    areas for improvement.
+    """
+    
+    # Performance domain metrics
+    PERFORMANCE_METRICS = {
+        "response_time": {
+            "unit": "milliseconds",
+            "good_threshold": 100,  # Below 100ms is good
+            "warning_threshold": 500,  # 100-500ms is warning
+            "critical_threshold": 1000  # Above 1000ms is critical
+        },
+        "throughput": {
+            "unit": "ops/second",
+            "good_threshold": 1000,  # Above 1000 ops/s is good
+            "warning_threshold": 500,  # 500-1000 ops/s is warning
+            "critical_threshold": 100  # Below 100 ops/s is critical
+        },
+        "cpu_usage": {
+            "unit": "percent",
+            "good_threshold": 50,  # Below 50% is good
+            "warning_threshold": 80,  # 50-80% is warning
+            "critical_threshold": 95  # Above 95% is critical
+        },
+        "memory_usage": {
+            "unit": "percent",
+            "good_threshold": 60,  # Below 60% is good
+            "warning_threshold": 85,  # 60-85% is warning
+            "critical_threshold": 95  # Above 95% is critical
         }
-    
-    # Default response for unknown task types
-    return {"domain": "system", "task_processed": True, "task_type": task_type}
-
-
-async def user_learning(data: Dict[str, Any], task_type: str) -> Dict[str, Any]:
-    """User domain learning implementation."""
-    logger.info(f"Processing user learning task: {task_type}")
-    
-    if task_type == "preference_analysis":
-        # Analyze user preferences
-        return {
-            "preferences_identified": True,
-            "preference_categories": [
-                "interface_layout", "notification_frequency", "color_theme"
-            ]
-        }
-    
-    elif task_type == "behavior_pattern":
-        # Identify user behavior patterns
-        return {
-            "patterns_found": True,
-            "common_patterns": [
-                "morning_productivity", "evening_browsing", "weekend_maintenance"
-            ]
-        }
-    
-    # Default response for unknown task types
-    return {"domain": "user", "task_processed": True, "task_type": task_type}
-
-
-async def hardware_learning(data: Dict[str, Any], task_type: str) -> Dict[str, Any]:
-    """Hardware domain learning implementation."""
-    logger.info(f"Processing hardware learning task: {task_type}")
-    
-    if task_type == "failure_prediction":
-        # Predict hardware failures
-        return {
-            "anomalies_detected": data.get("anomaly_count", 0) > 0,
-            "failure_probability": data.get("failure_probability", 0.05),
-            "recommended_action": "monitor" if data.get("failure_probability", 0.05) < 0.3 else "maintenance"
-        }
-    
-    elif task_type == "power_optimization":
-        # Optimize power usage
-        return {
-            "power_savings_possible": True,
-            "estimated_savings_percent": 12.5,
-            "strategies": ["dynamic_scaling", "idle_shutdown", "workload_scheduling"]
-        }
-    
-    # Default response for unknown task types
-    return {"domain": "hardware", "task_processed": True, "task_type": task_type}
-
-
-async def application_learning(data: Dict[str, Any], task_type: str) -> Dict[str, Any]:
-    """Application domain learning implementation."""
-    logger.info(f"Processing application learning task: {task_type}")
-    
-    if task_type == "usage_pattern":
-        # Analyze application usage patterns
-        return {
-            "patterns_detected": True,
-            "frequent_operations": data.get("frequent_operations", []),
-            "recommendations": ["shortcut_creation", "workflow_automation"]
-        }
-    
-    elif task_type == "resource_needs":
-        # Analyze application resource requirements
-        return {
-            "resource_profile_created": True,
-            "cpu_intensity": data.get("cpu_usage", 50) / 100.0,
-            "memory_intensity": data.get("memory_usage", 50) / 100.0,
-            "io_intensity": data.get("io_usage", 50) / 100.0
-        }
-    
-    # Default response for unknown task types
-    return {"domain": "application", "task_processed": True, "task_type": task_type}
-
-
-async def security_learning(data: Dict[str, Any], task_type: str) -> Dict[str, Any]:
-    """Security domain learning implementation."""
-    logger.info(f"Processing security learning task: {task_type}")
-    
-    if task_type == "threat_detection":
-        # Detect security threats
-        return {
-            "threats_detected": data.get("anomaly_count", 0) > 0,
-            "threat_level": "low" if data.get("anomaly_count", 0) < 3 else "medium",
-            "recommended_action": "monitor" if data.get("anomaly_count", 0) < 5 else "investigate"
-        }
-    
-    elif task_type == "access_pattern":
-        # Analyze access patterns for unusual behavior
-        return {
-            "unusual_patterns": data.get("unusual_count", 0) > 0,
-            "confidence": 0.75,
-            "access_categories": ["time_anomaly", "location_anomaly", "resource_anomaly"]
-        }
-    
-    # Default response for unknown task types
-    return {"domain": "security", "task_processed": True, "task_type": task_type}
-
-
-async def network_learning(data: Dict[str, Any], task_type: str) -> Dict[str, Any]:
-    """Network domain learning implementation."""
-    logger.info(f"Processing network learning task: {task_type}")
-    
-    if task_type == "traffic_analysis":
-        # Analyze network traffic patterns
-        return {
-            "patterns_detected": True,
-            "high_traffic_periods": ["09:00-11:00", "14:00-16:00"],
-            "dominant_protocols": data.get("dominant_protocols", ["HTTP", "HTTPS"])
-        }
-    
-    elif task_type == "optimization":
-        # Optimize network configuration
-        return {
-            "optimizations_possible": True,
-            "estimated_improvement": "15%",
-            "strategies": ["qos_adjustment", "protocol_prioritization", "bandwidth_allocation"]
-        }
-    
-    # Default response for unknown task types
-    return {"domain": "network", "task_processed": True, "task_type": task_type}
-
-
-async def intent_learning(data: Dict[str, Any], task_type: str) -> Dict[str, Any]:
-    """Intent domain learning implementation."""
-    logger.info(f"Processing intent learning task: {task_type}")
-    
-    if task_type == "intent_disambiguation":
-        # Disambiguate between similar intents
-        return {
-            "disambiguation_success": True,
-            "confidence": 0.85,
-            "selected_intent": data.get("selected_intent", "unknown"),
-            "alternative_intents": data.get("alternative_intents", [])
-        }
-    
-    elif task_type == "intent_correction":
-        # Learn from corrected intents
-        return {
-            "correction_learned": True,
-            "original_intent": data.get("original_intent", "unknown"),
-            "corrected_intent": data.get("corrected_intent", "unknown")
-        }
-    
-    # Default response for unknown task types
-    return {"domain": "intent", "task_processed": True, "task_type": task_type}
-
-
-def setup_domain_handlers() -> Dict[LearningDomain, Callable]:
-    """Set up handlers for different learning domains."""
-    return {
-        LearningDomain.SYSTEM: system_learning,
-        LearningDomain.USER: user_learning,
-        LearningDomain.HARDWARE: hardware_learning,
-        LearningDomain.APPLICATION: application_learning,
-        LearningDomain.SECURITY: security_learning,
-        LearningDomain.NETWORK: network_learning,
-        LearningDomain.INTENT: intent_learning
     }
+    
+    # Stability domain metrics
+    STABILITY_METRICS = {
+        "error_rate": {
+            "unit": "percent",
+            "good_threshold": 0.1,  # Below 0.1% is good
+            "warning_threshold": 1.0,  # 0.1-1.0% is warning
+            "critical_threshold": 5.0  # Above 5% is critical
+        },
+        "crash_frequency": {
+            "unit": "crashes/day",
+            "good_threshold": 0,  # 0 crashes is good
+            "warning_threshold": 1,  # 1 crash is warning
+            "critical_threshold": 3  # 3+ crashes is critical
+        },
+        "recovery_time": {
+            "unit": "seconds",
+            "good_threshold": 5,  # Below 5s is good
+            "warning_threshold": 30,  # 5-30s is warning
+            "critical_threshold": 60  # Above 60s is critical
+        }
+    }
+    
+    # Security domain metrics
+    SECURITY_METRICS = {
+        "threat_detections": {
+            "unit": "threats/day",
+            "good_threshold": 0,  # 0 threats is good
+            "warning_threshold": 5,  # 1-5 threats is warning
+            "critical_threshold": 10  # 10+ threats is critical
+        },
+        "vulnerability_count": {
+            "unit": "count",
+            "good_threshold": 0,  # 0 vulnerabilities is good
+            "warning_threshold": 3,  # 1-3 vulnerabilities is warning
+            "critical_threshold": 5  # 5+ vulnerabilities is critical
+        }
+    }
+    
+    # User interaction domain metrics
+    USER_INTERACTION_METRICS = {
+        "satisfaction_score": {
+            "unit": "score",
+            "good_threshold": 4.5,  # Above 4.5 is good
+            "warning_threshold": 3.5,  # 3.5-4.5 is acceptable
+            "critical_threshold": 3.0  # Below 3.0 is critical
+        },
+        "task_completion_rate": {
+            "unit": "percent",
+            "good_threshold": 95,  # Above 95% is good
+            "warning_threshold": 85,  # 85-95% is acceptable
+            "critical_threshold": 75  # Below 75% is critical
+        }
+    }
+    
+    @classmethod
+    def get_metrics_for_domain(cls, domain: LearningDomain) -> Dict:
+        """Get metrics for a specific domain."""
+        domain_metrics = {
+            LearningDomain.PERFORMANCE: cls.PERFORMANCE_METRICS,
+            LearningDomain.STABILITY: cls.STABILITY_METRICS,
+            LearningDomain.SECURITY: cls.SECURITY_METRICS,
+            LearningDomain.USER_INTERACTION: cls.USER_INTERACTION_METRICS
+        }
+        
+        return domain_metrics.get(domain, {})
+    
+    @classmethod
+    def evaluate_metric(cls, domain: LearningDomain, metric_name: str, value: float) -> str:
+        """
+        Evaluate a metric value against thresholds.
+        Returns: "good", "warning", or "critical"
+        """
+        metrics = cls.get_metrics_for_domain(domain)
+        if metric_name not in metrics:
+            return "unknown"
+            
+        thresholds = metrics[metric_name]
+        
+        # Handle metrics where lower is better
+        if metric_name in ["response_time", "error_rate", "crash_frequency", "recovery_time", 
+                          "threat_detections", "vulnerability_count"]:
+            if value <= thresholds["good_threshold"]:
+                return "good"
+            elif value <= thresholds["warning_threshold"]:
+                return "warning"
+            else:
+                return "critical"
+        # Handle metrics where higher is better
+        else:
+            if value >= thresholds["good_threshold"]:
+                return "good"
+            elif value >= thresholds["warning_threshold"]:
+                return "warning"
+            else:
+                return "critical"
+
+
+class DomainImprovement:
+    """
+    Defines improvement strategies for different learning domains.
+    """
+    
+    # Performance improvement strategies
+    PERFORMANCE_STRATEGIES = [
+        {
+            "name": "resource_allocation_optimization",
+            "description": "Optimize resource allocation based on usage patterns",
+            "applicability": ["high_cpu_usage", "high_memory_usage"]
+        },
+        {
+            "name": "caching_enhancement",
+            "description": "Implement or enhance caching for frequently accessed data",
+            "applicability": ["high_response_time", "high_disk_io"]
+        },
+        {
+            "name": "parallel_processing",
+            "description": "Implement parallel processing for CPU-intensive operations",
+            "applicability": ["high_cpu_usage", "low_throughput"]
+        },
+        {
+            "name": "algorithm_optimization",
+            "description": "Optimize algorithms for better performance",
+            "applicability": ["high_response_time", "high_cpu_usage"]
+        }
+    ]
+    
+    # Stability improvement strategies
+    STABILITY_STRATEGIES = [
+        {
+            "name": "error_handling_enhancement",
+            "description": "Enhance error handling and recovery mechanisms",
+            "applicability": ["high_error_rate", "high_crash_frequency"]
+        },
+        {
+            "name": "resource_leak_detection",
+            "description": "Implement detection and prevention of resource leaks",
+            "applicability": ["increasing_memory_usage", "degrading_performance"]
+        },
+        {
+            "name": "component_isolation",
+            "description": "Improve component isolation to prevent cascade failures",
+            "applicability": ["multiple_component_failures", "high_recovery_time"]
+        }
+    ]
+    
+    # Security improvement strategies
+    SECURITY_STRATEGIES = [
+        {
+            "name": "input_validation_enhancement",
+            "description": "Enhance input validation to prevent security vulnerabilities",
+            "applicability": ["validation_failures", "injection_attempts"]
+        },
+        {
+            "name": "access_control_refinement",
+            "description": "Refine access control mechanisms",
+            "applicability": ["unauthorized_access_attempts", "privilege_escalation"]
+        },
+        {
+            "name": "encryption_upgrade",
+            "description": "Upgrade encryption mechanisms for sensitive data",
+            "applicability": ["data_exposure", "encryption_vulnerabilities"]
+        }
+    ]
+    
+    # User interaction improvement strategies
+    USER_INTERACTION_STRATEGIES = [
+        {
+            "name": "interface_simplification",
+            "description": "Simplify interfaces for better user experience",
+            "applicability": ["low_satisfaction", "high_error_rate"]
+        },
+        {
+            "name": "intelligent_defaults",
+            "description": "Implement intelligent defaults based on user behavior",
+            "applicability": ["repeated_manual_configuration", "low_completion_rate"]
+        },
+        {
+            "name": "feedback_enhancement",
+            "description": "Improve system feedback for user actions",
+            "applicability": ["user_confusion", "repeated_actions"]
+        }
+    ]
+    
+    @classmethod
+    def get_strategies_for_domain(cls, domain: LearningDomain) -> List[Dict]:
+        """Get improvement strategies for a specific domain."""
+        domain_strategies = {
+            LearningDomain.PERFORMANCE: cls.PERFORMANCE_STRATEGIES,
+            LearningDomain.STABILITY: cls.STABILITY_STRATEGIES,
+            LearningDomain.SECURITY: cls.SECURITY_STRATEGIES,
+            LearningDomain.USER_INTERACTION: cls.USER_INTERACTION_STRATEGIES
+        }
+        
+        return domain_strategies.get(domain, [])
+    
+    @classmethod
+    def find_strategy_for_issue(cls, domain: LearningDomain, issues: List[str]) -> Optional[Dict]:
+        """Find an appropriate improvement strategy for identified issues."""
+        strategies = cls.get_strategies_for_domain(domain)
+        
+        # Find strategies that address any of the issues
+        matching_strategies = []
+        for strategy in strategies:
+            applicability = strategy.get("applicability", [])
+            if any(issue in applicability for issue in issues):
+                matching_strategies.append(strategy)
+        
+        # Return the best matching strategy if any found
+        if matching_strategies:
+            return max(matching_strategies, 
+                       key=lambda s: sum(1 for issue in issues if issue in s.get("applicability", [])))
+        
+        return None
+
+
+# Domain handler functions for simple cases
+async def handle_performance_learning(data: Dict) -> Dict:
+    """Handle performance domain learning."""
+    metrics = data.get("metrics", {})
+    
+    # Analyze metrics
+    issues = []
+    for metric_name, value in metrics.items():
+        status = DomainMetrics.evaluate_metric(LearningDomain.PERFORMANCE, metric_name, value)
+        if status in ["warning", "critical"]:
+            if metric_name == "response_time" and value > 500:
+                issues.append("high_response_time")
+            elif metric_name == "cpu_usage" and value > 80:
+                issues.append("high_cpu_usage")
+            elif metric_name == "memory_usage" and value > 85:
+                issues.append("high_memory_usage")
+            elif metric_name == "throughput" and value < 500:
+                issues.append("low_throughput")
+    
+    # Get improvement strategy
+    strategy = DomainImprovement.find_strategy_for_issue(LearningDomain.PERFORMANCE, issues)
+    
+    return {
+        "domain": "performance",
+        "issues_identified": issues,
+        "improvement_strategy": strategy,
+        "analysis_complete": True
+    }
+
+
+async def handle_stability_learning(data: Dict) -> Dict:
+    """Handle stability domain learning."""
+    metrics = data.get("metrics", {})
+    
+    # Analyze metrics
+    issues = []
+    for metric_name, value in metrics.items():
+        status = DomainMetrics.evaluate_metric(LearningDomain.STABILITY, metric_name, value)
+        if status in ["warning", "critical"]:
+            if metric_name == "error_rate" and value > 1.0:
+                issues.append("high_error_rate")
+            elif metric_name == "crash_frequency" and value > 1:
+                issues.append("high_crash_frequency")
+            elif metric_name == "recovery_time" and value > 30:
+                issues.append("high_recovery_time")
+    
+    # Get improvement strategy
+    strategy = DomainImprovement.find_strategy_for_issue(LearningDomain.STABILITY, issues)
+    
+    return {
+        "domain": "stability",
+        "issues_identified": issues,
+        "improvement_strategy": strategy,
+        "analysis_complete": True
+    }
+
+
+async def handle_security_learning(data: Dict) -> Dict:
+    """Handle security domain learning."""
+    events = data.get("events", [])
+    
+    # Analyze security events
+    issue_counts = {}
+    for event in events:
+        event_type = event.get("type", "unknown")
+        if event_type == "validation_failure":
+            issue_counts["validation_failures"] = issue_counts.get("validation_failures", 0) + 1
+        elif event_type == "injection_attempt":
+            issue_counts["injection_attempts"] = issue_counts.get("injection_attempts", 0) + 1
+        elif event_type == "unauthorized_access":
+            issue_counts["unauthorized_access_attempts"] = issue_counts.get("unauthorized_access_attempts", 0) + 1
+    
+    # Get issues above threshold
+    issues = [issue for issue, count in issue_counts.items() if count > 3]
+    
+    # Get improvement strategy
+    strategy = DomainImprovement.find_strategy_for_issue(LearningDomain.SECURITY, issues)
+    
+    return {
+        "domain": "security",
+        "issues_identified": issues,
+        "improvement_strategy": strategy,
+        "analysis_complete": True
+    }
+
+
+async def handle_user_interaction_learning(data: Dict) -> Dict:
+    """Handle user interaction domain learning."""
+    feedback = data.get("feedback", [])
+    
+    # Analyze user feedback
+    satisfaction_scores = [item.get("satisfaction", 0) for item in feedback if "satisfaction" in item]
+    completion_rates = [item.get("completion_rate", 0) for item in feedback if "completion_rate" in item]
+    
+    issues = []
+    if satisfaction_scores and sum(satisfaction_scores) / len(satisfaction_scores) < 3.5:
+        issues.append("low_satisfaction")
+    if completion_rates and sum(completion_rates) / len(completion_rates) < 85:
+        issues.append("low_completion_rate")
+    
+    # Get improvement strategy
+    strategy = DomainImprovement.find_strategy_for_issue(LearningDomain.USER_INTERACTION, issues)
+    
+    return {
+        "domain": "user_interaction",
+        "issues_identified": issues,
+        "improvement_strategy": strategy,
+        "analysis_complete": True
+    }
+
+
+def get_domain_handler(domain: LearningDomain) -> Callable:
+    """Get the appropriate handler function for a learning domain."""
+    handlers = {
+        LearningDomain.PERFORMANCE: handle_performance_learning,
+        LearningDomain.STABILITY: handle_stability_learning,
+        LearningDomain.SECURITY: handle_security_learning,
+        LearningDomain.USER_INTERACTION: handle_user_interaction_learning
+    }
+    
+    return handlers.get(domain, lambda data: {"error": "Domain not supported"})
