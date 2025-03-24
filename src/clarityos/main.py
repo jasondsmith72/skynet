@@ -10,10 +10,12 @@ import logging
 import os
 import signal
 import sys
+import json
 from typing import Dict, List, Optional
 
-from clarityos.core.agent_manager import agent_manager
-from clarityos.core.message_bus import MessagePriority, system_bus
+from src.clarityos.core.agent_manager import agent_manager
+from src.clarityos.core.message_bus import MessagePriority, system_bus
+from src.clarityos.boot_update_integration import BootUpdateIntegration
 
 # Configure logging
 logging.basicConfig(
@@ -32,9 +34,15 @@ class ClarityOS:
     Main class for ClarityOS that coordinates all components and manages the system lifecycle.
     """
     
-    def __init__(self):
+    def __init__(self, config: Optional[Dict] = None):
+        # System configuration
+        self.config = config or {}
+        
         # Flag to indicate if the system is shutting down
         self._shutting_down = False
+        
+        # Boot update integration component
+        self.boot_update_integration = None
         
         # Register signal handlers for graceful shutdown
         signal.signal(signal.SIGINT, self._signal_handler)
@@ -56,6 +64,14 @@ class ClarityOS:
             await system_bus.start()
             logger.info("System message bus started")
             
+            # Initialize the boot update integration
+            self.boot_update_integration = BootUpdateIntegration(
+                system_bus,
+                self.config.get("boot_update", {})
+            )
+            await self.boot_update_integration.start()
+            logger.info("Boot update integration started")
+            
             # Start the agent manager
             await agent_manager.start()
             logger.info("Agent manager started")
@@ -70,7 +86,8 @@ class ClarityOS:
                 message_type="system.started",
                 content={
                     "timestamp": asyncio.get_event_loop().time(),
-                    "version": "0.1.0"
+                    "version": "0.1.0",
+                    "self_updating": True
                 },
                 source="clarity_os",
                 priority=MessagePriority.HIGH
@@ -93,7 +110,7 @@ class ClarityOS:
         
         success, message = await agent_manager.register_agent(
             name="Resource Manager",
-            module_path="clarityos.agents.resource_agent.ResourceManagerAgent",
+            module_path="src.clarityos.agents.resource_agent.ResourceManagerAgent",
             description="Manages and optimizes system resources",
             config=resource_agent_config,
             auto_start=True
@@ -112,7 +129,7 @@ class ClarityOS:
         
         success, message = await agent_manager.register_agent(
             name="User Intent Agent",
-            module_path="clarityos.agents.intent_agent.UserIntentAgent",
+            module_path="src.clarityos.agents.intent_agent.UserIntentAgent",
             description="Processes and executes user intent",
             config=intent_agent_config,
             auto_start=True
@@ -122,11 +139,24 @@ class ClarityOS:
             logger.info(f"Registered User Intent agent: {message}")
         else:
             logger.error(f"Failed to register User Intent agent: {message}")
+            
+        # Register the system evolution agent through the boot update integration
+        if self.boot_update_integration:
+            success, message = await self.boot_update_integration.register_system_evolution_agent(agent_manager)
+            if success:
+                logger.info(f"Registered System Evolution agent: {message}")
+            else:
+                logger.error(f"Failed to register System Evolution agent: {message}")
     
     async def shutdown(self):
         """Gracefully shut down all system components."""
         if self._shutting_down:
             logger.info("Shutting down ClarityOS...")
+            
+            # Stop the boot update integration
+            if self.boot_update_integration:
+                await self.boot_update_integration.stop()
+                logger.info("Boot update integration stopped")
             
             # Stop the agent manager
             await agent_manager.stop()
@@ -186,11 +216,47 @@ class ClarityOS:
 
 async def main():
     """Main entry point for ClarityOS."""
+    # Load configuration
+    config = {}
+    config_path = "config/clarityos.json"
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, 'r') as f:
+                config = json.load(f)
+            logger.info(f"Loaded configuration from {config_path}")
+        except Exception as e:
+            logger.warning(f"Failed to load configuration: {str(e)}")
+    else:
+        # Create default configuration with self-updating capabilities enabled
+        config = {
+            "boot_update": {
+                "update_check_interval": 86400,  # Once per day
+                "auto_apply_security": True,
+                "learning_enabled": True,
+                "learning_frequency": 3600,  # Once per hour
+                "learning_domains": ["performance", "stability", "security", "user_interaction"],
+                "trusted_sources": [
+                    {"name": "official", "url": "https://updates.clarityos.ai/releases", "priority": "high"}
+                ]
+            }
+        }
+        
+        # Ensure config directory exists
+        os.makedirs(os.path.dirname(config_path), exist_ok=True)
+        
+        # Save default configuration
+        try:
+            with open(config_path, 'w') as f:
+                json.dump(config, f, indent=2)
+            logger.info(f"Created default configuration at {config_path}")
+        except Exception as e:
+            logger.warning(f"Failed to create default configuration: {str(e)}")
+    
     # Create the OS instance
-    os = ClarityOS()
+    os_instance = ClarityOS(config)
     
     # Start the OS
-    success = await os.startup()
+    success = await os_instance.startup()
     if not success:
         logger.error("Failed to start ClarityOS")
         return
@@ -204,7 +270,7 @@ async def main():
     
     except asyncio.CancelledError:
         # Gracefully shutdown
-        await os.shutdown()
+        await os_instance.shutdown()
 
 
 if __name__ == "__main__":
