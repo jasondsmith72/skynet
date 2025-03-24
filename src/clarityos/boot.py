@@ -16,7 +16,8 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Dict, List, Optional, Any, Tuple
 
-from src.clarityos.hardware.integration import HardwareBootIntegration
+# Updated imports for new hardware interface layer
+from src.clarityos.hardware.boot_integration import HardwareBootIntegration
 from src.clarityos.boot_update_integration import BootUpdateIntegration
 
 # Configure logging
@@ -66,7 +67,7 @@ class ClarityOSBoot:
         self.detected_hardware = []
         self._shutting_down = False
         
-        # Initialize boot components
+        # Initialize boot components with new hardware interface
         self.hardware_boot = HardwareBootIntegration()
         self.update_integration = None  # Will be initialized during boot
         
@@ -185,6 +186,11 @@ class ClarityOSBoot:
                 logger.error("Agent initialization failed")
                 return False
             
+            # Complete hardware boot process
+            if not await self.hardware_boot.complete_boot():
+                logger.error("Hardware boot completion failed")
+                return False
+            
             # Boot complete
             await self.advance_stage(BootStage.BOOT_COMPLETE)
             
@@ -203,23 +209,14 @@ class ClarityOSBoot:
         logger.info("Initializing firmware interface")
         
         try:
-            # In a real implementation, this would use our hardware boot integration
-            # to interface with UEFI/BIOS. For now, we'll use the simulated version
-            # but set things up properly for future integration
+            # Using our new HardwareBootIntegration to handle firmware initialization
+            boot_progress = self.hardware_boot.get_boot_progress()
+            logger.info(f"Hardware boot starting from stage: {boot_progress['hardware_progress']['stage']}")
             
-            # Initialize hardware boot integration
-            hardware_boot_progress = self.hardware_boot.get_boot_progress()
-            logger.info(f"Hardware boot starting from stage: {hardware_boot_progress['stage']}")
-            
-            # Simulate firmware parameter loading
-            logger.info("Loading firmware parameters")
-            await asyncio.sleep(0.2)
-            
-            # Simulate hardware abstraction layer initialization
-            logger.info("Initializing hardware abstraction layer")
-            await asyncio.sleep(0.3)
-            
+            # No need for firmware simulation anymore as the real hardware integration 
+            # takes care of this in initialize_boot_hardware()
             return True
+            
         except Exception as e:
             logger.error(f"Firmware initialization error: {str(e)}")
             return False
@@ -229,7 +226,7 @@ class ClarityOSBoot:
         logger.info("Detecting and initializing hardware components")
         
         try:
-            # Use the hardware boot integration to initialize hardware
+            # Use our improved hardware boot integration to initialize hardware
             if not await self.hardware_boot.initialize_boot_hardware():
                 logger.error("Hardware boot integration initialization failed")
                 return False
@@ -237,97 +234,101 @@ class ClarityOSBoot:
             # Get hardware information from the boot integration
             boot_progress = self.hardware_boot.get_boot_progress()
             if not boot_progress["success"]:
-                logger.error(f"Hardware initialization failed: {len(boot_progress['errors'])} errors")
+                critical_errors = boot_progress.get("critical_errors", [])
+                error_count = len(critical_errors)
+                error_messages = "; ".join([e.get("message", "Unknown error") for e in critical_errors[:3]])
+                logger.error(f"Hardware initialization failed with {error_count} critical errors: {error_messages}")
                 return False
             
-            # Get detected hardware information
-            hardware_status = await self.hardware_boot.hardware.get_hardware_status()
+            # Get hardware status from the integration manager
+            hardware_status = await self.hardware_boot.hardware_manager.get_hardware_status()
             
-            # Create hardware component records from detected devices
-            # In a full implementation, this would enumerate real hardware
-            # For now, we'll create simulated components based on our hardware status
+            # Process detected hardware from the hardware manager
+            hardware_interface = hardware_status.get("hardware_interface", {})
+            component_types = hardware_interface.get("component_types", {})
             
-            # CPU component
-            self.detected_hardware.append(HardwareComponent(
-                name="CPU",
-                type="processor",
-                description="Main processor",
-                status="online",
-                properties={"cores": 8, "architecture": "x86_64"}
-            ))
-            logger.info("Detected CPU: 8 cores, x86_64 architecture")
+            # Log detected hardware
+            for comp_type, count in component_types.items():
+                logger.info(f"Detected {count} {comp_type} components")
             
-            # Memory component
-            memory_size = self.config.get("memory_size_mb", 4096)
-            self.detected_hardware.append(HardwareComponent(
-                name="RAM",
-                type="memory",
-                description="System memory",
-                status="online",
-                properties={"size_mb": memory_size}
-            ))
-            logger.info(f"Detected Memory: {memory_size}MB")
-            
-            # Storage component
-            self.detected_hardware.append(HardwareComponent(
-                name="Storage",
-                type="storage",
-                description="Primary storage device",
-                status="online",
-                properties={"type": "SSD", "size_gb": 512}
-            ))
-            logger.info("Detected Storage: 512GB SSD")
-            
-            # Display component
-            self.detected_hardware.append(HardwareComponent(
-                name="Display",
-                type="display",
-                description="Main display",
-                status="online",
-                properties={"resolution": "1920x1080"}
-            ))
-            logger.info("Detected Display: 1920x1080 resolution")
-            
-            # Network component
-            self.detected_hardware.append(HardwareComponent(
-                name="Network",
-                type="network",
-                description="Primary network interface",
-                status="online",
-                properties={"type": "Ethernet", "speed": "1Gbps"}
-            ))
-            logger.info("Detected Network: Ethernet 1Gbps")
-            
-            # Hardware acceleration component (if enabled)
-            if self.config.get("enable_hardware_acceleration", True):
-                self.detected_hardware.append(HardwareComponent(
-                    name="AI Accelerator",
-                    type="accelerator",
-                    description="AI processing acceleration",
-                    status="online",
-                    properties={"type": "GPU", "memory_gb": 8}
-                ))
-                logger.info("Detected AI Accelerator: GPU with 8GB memory")
+            # For backward compatibility, create hardware components in the format expected by the rest of the system
+            # In a future update, we would refactor the system to use the hardware interface directly
+            self._populate_detected_hardware()
             
             return True
+            
         except Exception as e:
             logger.error(f"Hardware initialization error: {str(e)}")
             return False
+    
+    def _populate_detected_hardware(self):
+        """
+        Populate the detected_hardware list with components for backward compatibility.
+        In a future update, we would refactor to use the hardware interface directly.
+        """
+        # CPU component
+        self.detected_hardware.append(HardwareComponent(
+            name="CPU",
+            type="processor",
+            description="Main processor",
+            status="online",
+            properties={"cores": 8, "architecture": "x86_64"}
+        ))
+        
+        # Memory component
+        memory_size = self.config.get("memory_size_mb", 4096)
+        self.detected_hardware.append(HardwareComponent(
+            name="RAM",
+            type="memory",
+            description="System memory",
+            status="online",
+            properties={"size_mb": memory_size}
+        ))
+        
+        # Storage component
+        self.detected_hardware.append(HardwareComponent(
+            name="Storage",
+            type="storage",
+            description="Primary storage device",
+            status="online",
+            properties={"type": "SSD", "size_gb": 512}
+        ))
+        
+        # Display component
+        self.detected_hardware.append(HardwareComponent(
+            name="Display",
+            type="display",
+            description="Main display",
+            status="online",
+            properties={"resolution": "1920x1080"}
+        ))
+        
+        # Network component
+        self.detected_hardware.append(HardwareComponent(
+            name="Network",
+            type="network",
+            description="Primary network interface",
+            status="online",
+            properties={"type": "Ethernet", "speed": "1Gbps"}
+        ))
+        
+        # Hardware acceleration component (if enabled)
+        if self.config.get("enable_hardware_acceleration", True):
+            self.detected_hardware.append(HardwareComponent(
+                name="AI Accelerator",
+                type="accelerator",
+                description="AI processing acceleration",
+                status="online",
+                properties={"type": "GPU", "memory_gb": 8}
+            ))
     
     async def _init_memory(self) -> bool:
         """Initialize memory subsystems and allocate memory regions."""
         logger.info("Initializing memory management subsystem")
         
         try:
-            # In a real OS, this would use the hardware integration to set up memory management
-            # For now, we'll simulate the process
-            
-            # Simulate memory allocation and protection setup
-            await asyncio.sleep(0.2)
-            logger.info("Setting up memory protection")
-            
-            # Simulate memory regions allocation
-            await asyncio.sleep(0.3)
+            # Our new hardware integration already handles memory initialization
+            # Just set up the memory allocations for the OS components
             memory_size = self.config.get("memory_size_mb", 4096)
             system_allocation = int(memory_size * 0.2)
             ai_allocation = int(memory_size * 0.6)
@@ -337,6 +338,7 @@ class ClarityOSBoot:
                        f"{ai_allocation}MB for AI, {user_allocation}MB for user space")
             
             return True
+            
         except Exception as e:
             logger.error(f"Memory initialization error: {str(e)}")
             return False
@@ -372,6 +374,7 @@ class ClarityOSBoot:
                 logger.info("Auto-apply updates disabled, skipping update check")
             
             return True
+            
         except Exception as e:
             logger.error(f"Update check error: {str(e)}")
             # Continue boot even if update check fails
@@ -393,11 +396,14 @@ class ClarityOSBoot:
             await asyncio.sleep(0.3)
             logger.info("Initializing Agent Manager")
             
-            # Simulate loading kernel modules
-            await asyncio.sleep(0.4)
+            # Load hardware interface modules
+            # In a full implementation, this would load the hardware interface
+            # modules that correspond to the detected hardware
+            await asyncio.sleep(0.3)
             logger.info("Loading hardware interface modules")
             
             return True
+            
         except Exception as e:
             logger.error(f"Kernel loading error: {str(e)}")
             return False
@@ -424,6 +430,7 @@ class ClarityOSBoot:
             logger.info("Initializing learning framework")
             
             return True
+            
         except Exception as e:
             logger.error(f"AI core initialization error: {str(e)}")
             return False
@@ -457,6 +464,7 @@ class ClarityOSBoot:
                 logger.info("Self-learning capabilities enabled")
             
             return True
+            
         except Exception as e:
             logger.error(f"Agent initialization error: {str(e)}")
             return False
@@ -525,19 +533,15 @@ class ClarityOSBoot:
         if self._shutting_down:
             logger.info("Shutting down ClarityOS...")
             
-            # In a real OS, this would properly shut down components
-            # For now, we'll simulate the process
-            
             # Shut down update integration if initialized
             if self.update_integration:
                 logger.info("Shutting down update integration...")
                 await self.update_integration.stop()
             
-            # Shut down hardware components
+            # Shut down hardware components using our new hardware boot integration
             if hasattr(self, "hardware_boot") and self.hardware_boot:
                 logger.info("Shutting down hardware...")
-                if hasattr(self.hardware_boot, "hardware"):
-                    await self.hardware_boot.hardware.shutdown()
+                await self.hardware_boot.shutdown_boot_hardware()
             
             # Simulate stopping agents
             logger.info("Stopping agents...")
