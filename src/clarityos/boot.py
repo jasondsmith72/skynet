@@ -13,8 +13,11 @@ import signal
 import sys
 import time
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, auto
 from typing import Dict, List, Optional, Any, Tuple
+
+from src.clarityos.hardware.integration import HardwareBootIntegration
+from src.clarityos.boot_update_integration import BootUpdateIntegration
 
 # Configure logging
 logging.basicConfig(
@@ -30,13 +33,14 @@ logger = logging.getLogger(__name__)
 
 class BootStage(Enum):
     """Stages of the ClarityOS boot process."""
-    FIRMWARE = "firmware"
-    HARDWARE_INIT = "hardware_init"
-    MEMORY_INIT = "memory_init"
-    KERNEL_LOAD = "kernel_load"
-    AI_CORE_INIT = "ai_core_init"
-    AGENT_INIT = "agent_init"
-    BOOT_COMPLETE = "boot_complete"
+    FIRMWARE = auto()         # Initial firmware interaction
+    HARDWARE_INIT = auto()    # Hardware initialization
+    MEMORY_INIT = auto()      # Memory subsystem initialization
+    UPDATES_CHECK = auto()    # Check for and apply updates
+    KERNEL_LOAD = auto()      # Load AI kernel components
+    AI_CORE_INIT = auto()     # Initialize AI core
+    AGENT_INIT = auto()       # Initialize agents
+    BOOT_COMPLETE = auto()    # Boot process complete
 
 
 @dataclass
@@ -62,6 +66,10 @@ class ClarityOSBoot:
         self.detected_hardware = []
         self._shutting_down = False
         
+        # Initialize boot components
+        self.hardware_boot = HardwareBootIntegration()
+        self.update_integration = None  # Will be initialized during boot
+        
         # Register signal handlers for graceful shutdown
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
@@ -83,7 +91,9 @@ class ClarityOSBoot:
             "debug_mode": False,
             "component_retries": 3,
             "emergency_console": True,
-            "boot_verbosity": "normal"  # minimal, normal, verbose, debug
+            "boot_verbosity": "normal",  # minimal, normal, verbose, debug
+            "auto_apply_updates": True,
+            "enable_self_learning": True
         }
         
         if not config_path or not os.path.exists(config_path):
@@ -116,11 +126,11 @@ class ClarityOSBoot:
             if prev_stage in self.stage_timestamps:
                 prev_time = self.stage_timestamps[prev_stage]
                 duration = now - prev_time
-                logger.info(f"Boot stage advanced to {stage.value} (previous stage took {duration:.2f} seconds)")
+                logger.info(f"Boot stage advanced to {stage.name} (previous stage took {duration:.2f} seconds)")
             else:
-                logger.info(f"Boot stage advanced to {stage.value}")
+                logger.info(f"Boot stage advanced to {stage.name}")
         else:
-            logger.info(f"Boot stage initialized at {stage.value}")
+            logger.info(f"Boot stage initialized at {stage.name}")
     
     async def boot(self) -> bool:
         """
@@ -149,6 +159,12 @@ class ClarityOSBoot:
             await self.advance_stage(BootStage.MEMORY_INIT)
             if not await self._init_memory():
                 logger.error("Memory initialization failed")
+                return False
+                
+            # Check for and apply updates
+            await self.advance_stage(BootStage.UPDATES_CHECK)
+            if not await self._check_updates():
+                logger.error("Update check failed")
                 return False
             
             # Load AI kernel components
@@ -186,9 +202,15 @@ class ClarityOSBoot:
         """Initialize firmware interfaces and hardware abstraction layer."""
         logger.info("Initializing firmware interface")
         
-        # In a real OS, this would interface with UEFI/BIOS
-        # For now, we'll simulate the process
         try:
+            # In a real implementation, this would use our hardware boot integration
+            # to interface with UEFI/BIOS. For now, we'll use the simulated version
+            # but set things up properly for future integration
+            
+            # Initialize hardware boot integration
+            hardware_boot_progress = self.hardware_boot.get_boot_progress()
+            logger.info(f"Hardware boot starting from stage: {hardware_boot_progress['stage']}")
+            
             # Simulate firmware parameter loading
             logger.info("Loading firmware parameters")
             await asyncio.sleep(0.2)
@@ -203,15 +225,29 @@ class ClarityOSBoot:
             return False
     
     async def _init_hardware(self) -> bool:
-        """Detect and initialize hardware components."""
+        """Detect and initialize hardware components using hardware integration."""
         logger.info("Detecting and initializing hardware components")
         
         try:
-            # In a real OS, this would probe actual hardware
-            # For now, we'll simulate the hardware detection process
+            # Use the hardware boot integration to initialize hardware
+            if not await self.hardware_boot.initialize_boot_hardware():
+                logger.error("Hardware boot integration initialization failed")
+                return False
             
-            # Simulate CPU detection
-            await asyncio.sleep(0.2)
+            # Get hardware information from the boot integration
+            boot_progress = self.hardware_boot.get_boot_progress()
+            if not boot_progress["success"]:
+                logger.error(f"Hardware initialization failed: {len(boot_progress['errors'])} errors")
+                return False
+            
+            # Get detected hardware information
+            hardware_status = await self.hardware_boot.hardware.get_hardware_status()
+            
+            # Create hardware component records from detected devices
+            # In a full implementation, this would enumerate real hardware
+            # For now, we'll create simulated components based on our hardware status
+            
+            # CPU component
             self.detected_hardware.append(HardwareComponent(
                 name="CPU",
                 type="processor",
@@ -221,8 +257,7 @@ class ClarityOSBoot:
             ))
             logger.info("Detected CPU: 8 cores, x86_64 architecture")
             
-            # Simulate memory detection
-            await asyncio.sleep(0.2)
+            # Memory component
             memory_size = self.config.get("memory_size_mb", 4096)
             self.detected_hardware.append(HardwareComponent(
                 name="RAM",
@@ -233,8 +268,7 @@ class ClarityOSBoot:
             ))
             logger.info(f"Detected Memory: {memory_size}MB")
             
-            # Simulate storage detection
-            await asyncio.sleep(0.3)
+            # Storage component
             self.detected_hardware.append(HardwareComponent(
                 name="Storage",
                 type="storage",
@@ -244,8 +278,7 @@ class ClarityOSBoot:
             ))
             logger.info("Detected Storage: 512GB SSD")
             
-            # Simulate display detection
-            await asyncio.sleep(0.2)
+            # Display component
             self.detected_hardware.append(HardwareComponent(
                 name="Display",
                 type="display",
@@ -255,8 +288,7 @@ class ClarityOSBoot:
             ))
             logger.info("Detected Display: 1920x1080 resolution")
             
-            # Simulate network detection
-            await asyncio.sleep(0.2)
+            # Network component
             self.detected_hardware.append(HardwareComponent(
                 name="Network",
                 type="network",
@@ -266,9 +298,8 @@ class ClarityOSBoot:
             ))
             logger.info("Detected Network: Ethernet 1Gbps")
             
-            # Simulate hardware acceleration
+            # Hardware acceleration component (if enabled)
             if self.config.get("enable_hardware_acceleration", True):
-                await asyncio.sleep(0.3)
                 self.detected_hardware.append(HardwareComponent(
                     name="AI Accelerator",
                     type="accelerator",
@@ -288,7 +319,7 @@ class ClarityOSBoot:
         logger.info("Initializing memory management subsystem")
         
         try:
-            # In a real OS, this would set up memory management
+            # In a real OS, this would use the hardware integration to set up memory management
             # For now, we'll simulate the process
             
             # Simulate memory allocation and protection setup
@@ -309,6 +340,42 @@ class ClarityOSBoot:
         except Exception as e:
             logger.error(f"Memory initialization error: {str(e)}")
             return False
+    
+    async def _check_updates(self) -> bool:
+        """Check for and apply updates during boot if needed."""
+        logger.info("Checking for system updates")
+        
+        try:
+            # Initialize the boot update integration
+            from src.clarityos.core.message_bus import system_bus
+            
+            self.update_integration = BootUpdateIntegration(
+                system_bus,
+                self.config.get("boot_update", {})
+            )
+            
+            # Start the update integration
+            await self.update_integration.start()
+            logger.info("Boot update integration started")
+            
+            # Check for pending updates that should be applied during boot
+            if self.config.get("auto_apply_updates", True):
+                logger.info("Checking for pending updates to apply during boot")
+                
+                # Wait for any boot-time updates to complete
+                while self.update_integration.updates_in_progress:
+                    logger.info("Waiting for boot-time updates to complete...")
+                    await asyncio.sleep(1)
+                
+                logger.info("Update check completed")
+            else:
+                logger.info("Auto-apply updates disabled, skipping update check")
+            
+            return True
+        except Exception as e:
+            logger.error(f"Update check error: {str(e)}")
+            # Continue boot even if update check fails
+            return True
     
     async def _load_kernel(self) -> bool:
         """Load and initialize the AI kernel components."""
@@ -381,6 +448,14 @@ class ClarityOSBoot:
             await asyncio.sleep(0.3)
             logger.info("Starting System Evolution Agent")
             
+            # Enable self-learning if configured
+            if self.config.get("enable_self_learning", True):
+                logger.info("Enabling self-learning capabilities")
+                # In a real implementation, this would configure self-learning
+                # For now, we'll just simulate it
+                await asyncio.sleep(0.2)
+                logger.info("Self-learning capabilities enabled")
+            
             return True
         except Exception as e:
             logger.error(f"Agent initialization error: {str(e)}")
@@ -401,13 +476,13 @@ class ClarityOSBoot:
             for i in range(current_idx + 1, len(stages)):
                 next_stage = stages[i]
                 if next_stage in self.stage_timestamps:
-                    stage_durations[stage.value] = self.stage_timestamps[next_stage] - timestamp
+                    stage_durations[stage.name] = self.stage_timestamps[next_stage] - timestamp
                     next_stage_found = True
                     break
             
             # If no next stage, calculate duration until now
             if not next_stage_found:
-                stage_durations[stage.value] = now - timestamp
+                stage_durations[stage.name] = now - timestamp
         
         # Calculate boot completion percentage
         stages = list(BootStage)
@@ -417,8 +492,19 @@ class ClarityOSBoot:
             current_idx = stages.index(self.current_stage)
             completion = (current_idx / (len(stages) - 1)) * 100
         
+        # Get hardware boot status
+        hardware_status = {}
+        if hasattr(self, "hardware_boot") and self.hardware_boot:
+            hardware_status = self.hardware_boot.get_boot_progress()
+        
+        # Get update status
+        update_status = {}
+        if self.update_integration:
+            # In a real implementation, this would get update status from the integration
+            update_status = {"updates_applied": False}
+        
         return {
-            "current_stage": self.current_stage.value,
+            "current_stage": self.current_stage.name,
             "completion_percentage": completion,
             "stage_durations": stage_durations,
             "detected_hardware": [
@@ -429,6 +515,8 @@ class ClarityOSBoot:
                     "description": hw.description
                 } for hw in self.detected_hardware
             ],
+            "hardware_status": hardware_status,
+            "update_status": update_status,
             "total_duration": now - self.stage_timestamps[BootStage.FIRMWARE]
         }
     
@@ -440,6 +528,17 @@ class ClarityOSBoot:
             # In a real OS, this would properly shut down components
             # For now, we'll simulate the process
             
+            # Shut down update integration if initialized
+            if self.update_integration:
+                logger.info("Shutting down update integration...")
+                await self.update_integration.stop()
+            
+            # Shut down hardware components
+            if hasattr(self, "hardware_boot") and self.hardware_boot:
+                logger.info("Shutting down hardware...")
+                if hasattr(self.hardware_boot, "hardware"):
+                    await self.hardware_boot.hardware.shutdown()
+            
             # Simulate stopping agents
             logger.info("Stopping agents...")
             await asyncio.sleep(0.3)
@@ -450,10 +549,6 @@ class ClarityOSBoot:
             
             # Simulate unloading kernel
             logger.info("Unloading kernel components...")
-            await asyncio.sleep(0.2)
-            
-            # Simulate hardware shutdown
-            logger.info("Shutting down hardware...")
             await asyncio.sleep(0.2)
             
             logger.info("ClarityOS shutdown complete")
