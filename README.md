@@ -34,7 +34,7 @@ ClarityOS is an operating system concept built around a unified natural language
 - **Self-Healing System**: Automatic detection and repair of system issues
 - **Universal Compatibility**: Run applications from any platform (Windows, Linux, macOS, iOS, Android)
 
-**New: [ClarityOS Core Implementation](src/clarityos/)** - We've started development on the core components of ClarityOS, including the message bus, agent manager, resource allocation agent, and user intent processing. Check out the implementation in the `src/clarityos/` directory.
+**New: [Self-Updating Boot System](src/clarityos/docs/SELF_UPDATING_OS.md)** - We've implemented a comprehensive self-updating boot system that enables ClarityOS to learn, evolve, and update itself autonomously. This system integrates self-learning capabilities, update management, and secure boot processes to create a truly AI-native operating system that improves over time.
 
 [Learn more about ClarityOS](docs/concepts/ai-driven-os.md)  
 [Learn more about Self-Healing](docs/concepts/self-healing-system.md)  
@@ -136,6 +136,15 @@ The Skynet Project adheres to several core design principles:
 
 ### Recent Developments
 
+- **Self-Updating Boot System**: We've implemented a comprehensive AI-native boot system:
+  - **System Evolution Agent**: Manages updates and system improvements
+  - **Self-Learning Framework**: Enables the system to learn and improve itself
+  - **Boot Update Integration**: Coordinates updates during system boot
+  - **Learning Strategies**: Multiple approaches for system optimization
+  - **Complete Implementation Roadmap**: Path to a fully bootable AI-native OS
+
+  This implementation represents significant progress toward creating an operating system that can truly evolve autonomously.
+
 - **MSP Integration Module**: We've implemented a practical integration module for MSPs:
   - **ConnectWise Integration**: Full connector for ConnectWise Manage and Automate
   - **AI-Driven Monitoring**: Machine learning-based anomaly detection for client systems
@@ -182,6 +191,12 @@ The Skynet Project adheres to several core design principles:
   These components demonstrate the foundation of our AI-first approach to operating system design.
 
 ### Next Steps
+
+- **Native Boot Environment**:
+  - Develop firmware interface for direct hardware boot
+  - Create hardware abstraction layer for device interaction
+  - Implement essential device driver framework
+  - Build memory management and process isolation
 
 - **MSP Integration Enhancements**:
   - Expand platform connectors to additional PSA/RMM systems
