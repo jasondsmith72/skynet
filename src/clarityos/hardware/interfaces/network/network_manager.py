@@ -15,9 +15,12 @@ from typing import Dict, List, Optional, Tuple, Any, Union
 from .base_interface import NetworkInterface, NetworkInterfaceType, NetworkStatus
 from .ethernet_interface import EthernetInterface
 from .wifi_interface import WiFiInterface
+from .network_manager_operations import NetworkManagerOperations
+from .safe_driver_manager import SafeNetworkDriverManager
 from ....driver_framework import DriverManager
 from ....safety.security_manager import SecurityManager
 from ....knowledge_repository import KnowledgeRepository
+from ....hal import HardwareAbstractionLayer
 from ....core.message_bus import MessageBus
 
 # Configure logging
@@ -30,22 +33,35 @@ class NetworkManager:
     """
     
     def __init__(self, message_bus: MessageBus, driver_manager: DriverManager, 
-                 security_manager: SecurityManager, knowledge_repository: KnowledgeRepository):
+                 security_manager: SecurityManager, knowledge_repository: KnowledgeRepository,
+                 hal: Optional[HardwareAbstractionLayer] = None):
         self.message_bus = message_bus
         self.driver_manager = driver_manager
         self.security_manager = security_manager
         self.knowledge_repository = knowledge_repository
+        self.hal = hal
+        self.safe_driver_manager = None
         self.interfaces: Dict[str, NetworkInterface] = {}
         self.primary_interface = None
         self._internet_connected = False
         self._discovery_complete = False
         self._connection_monitor_thread = None
-        self._stop_monitoring = False
+        self._stop_monitoring_event = threading.Event()
         
     def initialize(self) -> bool:
         """Initialize the Network Manager."""
         try:
             logger.info("Initializing Network Manager")
+            
+            # Initialize safe driver manager if HAL is available
+            if self.hal:
+                self.safe_driver_manager = SafeNetworkDriverManager(
+                    self.driver_manager,
+                    self.hal,
+                    self.security_manager,
+                    self.knowledge_repository
+                )
+                self.safe_driver_manager.initialize()
             
             # Subscribe to relevant messages
             self.message_bus.subscribe("system.hardware.discovered", self._handle_hardware_discovered)
@@ -110,7 +126,7 @@ class NetworkManager:
                 
         except Exception as e:
             logger.error(f"Error discovering network interfaces: {e}")
-    
+            
     def _handle_hardware_discovered(self, message: Dict[str, Any]) -> None:
         """Handle hardware discovery events."""
         try:
@@ -145,88 +161,3 @@ class NetworkManager:
                         })
         except Exception as e:
             logger.error(f"Error handling hardware discovery event: {e}")
-    
-    def _handle_connect_request(self, message: Dict[str, Any]) -> None:
-        """Handle network connection requests."""
-        try:
-            interface_name = message.get('interface')
-            network_name = message.get('network')
-            password = message.get('password')
-            timeout = message.get('timeout', 30)
-            
-            # If no specific interface requested, choose the best available
-            if interface_name is None:
-                interface_name = self._choose_best_interface()
-                
-            if interface_name is None or interface_name not in self.interfaces:
-                logger.error(f"Invalid interface requested: {interface_name}")
-                self.message_bus.publish("system.network.connect_response", {
-                    "success": False,
-                    "error": f"Invalid interface: {interface_name}"
-                })
-                return
-                
-            interface = self.interfaces[interface_name]
-            
-            # Connect based on interface type
-            success = False
-            if interface.type == NetworkInterfaceType.ETHERNET:
-                success = interface.connect(timeout)
-            elif interface.type == NetworkInterfaceType.WIFI:
-                success = interface.connect(network_name, password, timeout)
-                
-            # Update primary interface if needed
-            if success and (self.primary_interface is None or message.get('set_primary', False)):
-                self._set_primary_interface(interface_name)
-            
-            # Publish response
-            self.message_bus.publish("system.network.connect_response", {
-                "success": success,
-                "interface": interface_name,
-                "status": interface.status.value,
-                "ip_address": interface.ip_address
-            })
-            
-        except Exception as e:
-            logger.error(f"Error handling connect request: {e}")
-            self.message_bus.publish("system.network.connect_response", {
-                "success": False,
-                "error": str(e)
-            })
-    
-    def _handle_disconnect_request(self, message: Dict[str, Any]) -> None:
-        """Handle network disconnection requests."""
-        try:
-            interface_name = message.get('interface')
-            
-            if interface_name not in self.interfaces:
-                logger.error(f"Invalid interface requested for disconnect: {interface_name}")
-                self.message_bus.publish("system.network.disconnect_response", {
-                    "success": False,
-                    "error": f"Invalid interface: {interface_name}"
-                })
-                return
-                
-            interface = self.interfaces[interface_name]
-            success = interface.disconnect()
-            
-            # Update primary interface if needed
-            if success and self.primary_interface == interface_name:
-                self.primary_interface = None
-                # Try to find a new primary interface
-                new_primary = self._choose_connected_interface()
-                if new_primary:
-                    self._set_primary_interface(new_primary)
-            
-            # Publish response
-            self.message_bus.publish("system.network.disconnect_response", {
-                "success": success,
-                "interface": interface_name
-            })
-            
-        except Exception as e:
-            logger.error(f"Error handling disconnect request: {e}")
-            self.message_bus.publish("system.network.disconnect_response", {
-                "success": False,
-                "error": str(e)
-            })
