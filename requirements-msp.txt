@@ -1,0 +1,27 @@
+# MSP Integration Requirements
+
+# Core dependencies
+python>=3.7
+pyyaml>=6.0        # For configuration files
+requests>=2.28.0   # For API communication
+scikit-learn>=1.0.0  # For anomaly detection
+flask>=2.2.0       # For dashboard web interface
+
+# Monitoring dependencies
+numpy>=1.20.0      # For numerical operations
+pandas>=1.2.0      # For data processing
+
+# Testing
+pytest>=6.0.0
+pytest-cov>=2.12.0
+
+# Development tools
+black>=21.5b2      # Code formatting
+flake8>=3.9.2      # Linting
+mypy>=0.812        # Type checking
+
+# Optional dashboard enhancement
+# Install these for a better dashboard experience
+# flask-login>=0.6.2  # For authentication
+# flask-wtf>=1.1.1   # For forms
+# plotly>=5.10.0     # For data visualization
