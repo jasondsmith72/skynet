@@ -182,7 +182,7 @@ def add_statement_parsers(cls):
         name = Identifier(name_token.value, name_token.line, name_token.column)
         
         self.consume(TokenType.LPAREN, "Expected '(' after function name.")
-        parameters = self.parse_parameter_list() # Placeholder
+        parameters = self.parse_parameter_list()
         self.consume(TokenType.RPAREN, "Expected ')' after parameters.")
         
         return_type: Optional[TypeAnnotation] = None
@@ -238,11 +238,25 @@ def add_statement_parsers(cls):
 
     def parse_parameter_list(self) -> List[Parameter]:
         """Parse a list of parameters: (name: type, name: type = default, ...)"""
-        # Placeholder implementation
         parameters = []
         if not self.check(TokenType.RPAREN):
-            # TODO: Implement full parameter parsing with types and defaults
-            pass 
+            while True:
+                param_token = self.consume(TokenType.IDENTIFIER, "Expected parameter name.")
+                param_name = Identifier(param_token.value, param_token.line, param_token.column)
+                
+                param_type: Optional[TypeAnnotation] = None
+                if self.match(TokenType.COLON):
+                    param_type = self.parse_type_annotation()
+                    
+                default_value: Optional[Expression] = None
+                if self.match(TokenType.ASSIGN):
+                    default_value = self.parse_expression()
+                    
+                parameters.append(Parameter(param_name, param_type, default_value, param_token.line, param_token.column))
+                
+                if not self.match(TokenType.COMMA):
+                    break # Exit loop if no comma follows
+                    
         return parameters
 
     def parse_type_annotation(self) -> TypeAnnotation:
