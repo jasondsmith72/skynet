@@ -4,7 +4,7 @@ Clarity Programming Language Parser - Statement Parsing
 This module implements the statement parsing components of the Clarity parser.
 """
 
-from typing import List, Optional, Any
+from typing import List, Optional, Any, Union
 from .lexer import Token, TokenType
 from .ast import *
 from .parser import Parser, ParseError
@@ -77,7 +77,7 @@ def add_statement_parsers(cls):
         
         type_annotation: Optional[TypeAnnotation] = None
         if self.match(TokenType.COLON):
-            type_annotation = self.parse_type_annotation() # Placeholder
+            type_annotation = self.parse_type_annotation()
             
         initializer: Optional[Expression] = None
         if self.match(TokenType.ASSIGN):
@@ -187,7 +187,7 @@ def add_statement_parsers(cls):
         
         return_type: Optional[TypeAnnotation] = None
         if self.match(TokenType.ARROW):
-            return_type = self.parse_type_annotation() # Placeholder
+            return_type = self.parse_type_annotation()
             
         body = self.parse_block()
         
@@ -247,20 +247,53 @@ def add_statement_parsers(cls):
 
     def parse_type_annotation(self) -> TypeAnnotation:
         """Parse a type annotation: int, float, string, bool, tensor[type, shape], prob[type], grad[type]"""
-        # Placeholder implementation
+        start_token = self.peek()
+        
         if self.match(TokenType.TYPE_INT):
-            return SimpleType("int", self.previous().line, self.previous().column)
+            return SimpleType("int", start_token.line, start_token.column)
         elif self.match(TokenType.TYPE_FLOAT):
-             return SimpleType("float", self.previous().line, self.previous().column)
+            return SimpleType("float", start_token.line, start_token.column)
         elif self.match(TokenType.TYPE_STRING):
-             return SimpleType("string", self.previous().line, self.previous().column)
+            return SimpleType("string", start_token.line, start_token.column)
         elif self.match(TokenType.TYPE_BOOL):
-             return SimpleType("bool", self.previous().line, self.previous().column)
-        # TODO: Add parsing for TENSOR, PROB, GRAD types
+            return SimpleType("bool", start_token.line, start_token.column)
+        elif self.match(TokenType.TENSOR):
+            self.consume(TokenType.LBRACKET, "Expected '[' after 'tensor'.")
+            element_type = self.parse_type_annotation()
+            shape: List[Union[int, str]] = []
+            while self.match(TokenType.COMMA):
+                if self.check(TokenType.INT):
+                    dim_token = self.advance()
+                    shape.append(int(dim_token.value))
+                elif self.check(TokenType.IDENTIFIER):
+                    # Allow identifiers for dynamic shapes (e.g., 'batch_size')
+                    dim_token = self.advance()
+                    shape.append(dim_token.value)
+                else:
+                    self.error(self.peek(), "Expected integer literal or identifier for tensor dimension.")
+                    # Attempt recovery by skipping until comma or bracket
+                    while not self.check(TokenType.COMMA) and not self.check(TokenType.RBRACKET) and not self.is_at_end():
+                        self.advance()
+            self.consume(TokenType.RBRACKET, "Expected ']' after tensor shape.")
+            return TensorType(element_type, shape, start_token.line, start_token.column)
+        elif self.match(TokenType.PROB):
+            self.consume(TokenType.LBRACKET, "Expected '[' after 'prob'.")
+            base_type = self.parse_type_annotation()
+            # Optional: Parse distribution parameters if syntax allows
+            distribution = None 
+            self.consume(TokenType.RBRACKET, "Expected ']' after probabilistic type.")
+            return ProbabilisticType(base_type, distribution, start_token.line, start_token.column)
+        elif self.match(TokenType.GRAD):
+            self.consume(TokenType.LBRACKET, "Expected '[' after 'grad'.")
+            base_type = self.parse_type_annotation()
+            self.consume(TokenType.RBRACKET, "Expected ']' after gradient type.")
+            return GradientType(base_type, start_token.line, start_token.column)
+        elif self.match(TokenType.IDENTIFIER):
+            # User-defined type or potentially a simple type not yet matched
+            name = self.previous().value
+            return SimpleType(name, start_token.line, start_token.column)
         else:
-            name_token = self.consume(TokenType.IDENTIFIER, "Expected type name.")
-            # Assume simple type for now if identifier is found
-            return SimpleType(name_token.value, name_token.line, name_token.column)
+            raise self.error(start_token, "Expected type name (int, float, tensor, prob, grad, or identifier).")
 
     # Add the methods to the class
     cls.parse_statement = parse_statement
