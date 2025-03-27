@@ -24,42 +24,58 @@ def add_statement_parsers(cls):
     
     def parse_statement(self) -> Statement:
         """Parse a single statement."""
+        # Check for decorators first
+        decorators = []
+        while self.check(TokenType.DECORATOR):
+            decorators.append(self.advance().value)
+            
         if self.match(TokenType.VAR):
+            if decorators:
+                 self.error(self.previous(), "Decorators are not allowed on variable declarations.")
             return self.parse_variable_declaration()
         elif self.match(TokenType.IF):
+            if decorators:
+                 self.error(self.previous(), "Decorators are not allowed on if statements.")
             return self.parse_if_statement()
         elif self.match(TokenType.WHILE):
+            if decorators:
+                 self.error(self.previous(), "Decorators are not allowed on while loops.")
             return self.parse_while_loop()
         elif self.match(TokenType.FOR):
-            return self.parse_for_loop() # Placeholder
+            if decorators:
+                 self.error(self.previous(), "Decorators are not allowed on for loops.")
+            return self.parse_for_loop()
         elif self.match(TokenType.RETURN):
+            if decorators:
+                 self.error(self.previous(), "Decorators are not allowed on return statements.")
             return self.parse_return_statement()
         elif self.match(TokenType.LBRACE):
+            if decorators:
+                 self.error(self.previous(), "Decorators are not allowed on blocks.")
             return self.parse_block()
         elif self.match(TokenType.IMPORT):
-             # Already handled in main parse loop, but keep for potential future use
-             # or if called from other contexts. For now, raise error or skip.
+             # Already handled in main parse loop
              self.error(self.previous(), "Import statement found outside of top level.")
-             self.synchronize() # Attempt to recover
-             return None # Or a specific error node if defined
+             self.synchronize()
+             return None
         elif self.match(TokenType.FUNC):
-             # Already handled in main parse loop
-             self.error(self.previous(), "Function definition found outside of top level.")
-             self.synchronize()
-             return None
+             # Pass decorators to parse_function
+             return self.parse_function(decorators)
         elif self.match(TokenType.MODEL):
-             # Already handled in main parse loop
-             self.error(self.previous(), "Model definition found outside of top level.")
-             self.synchronize()
-             return None
+             # Pass decorators to parse_model
+             return self.parse_model(decorators)
         else:
+            if decorators:
+                 self.error(self.peek(), "Decorators can only be applied to functions or models.")
             # Default to expression statement
             return self.parse_expression_statement()
 
     def parse_block(self) -> Block:
         """Parse a block of statements enclosed in curly braces."""
         statements = []
-        start_token = self.previous() # The opening LBRACE
+        # If called directly (e.g. for if/else/loop body), previous() might not be LBRACE
+        # If called via parse_statement, previous() IS LBRACE
+        start_token = self.previous() if self.previous().type == TokenType.LBRACE else self.peek() 
         
         while not self.check(TokenType.RBRACE) and not self.is_at_end():
             stmt = self.parse_statement()
@@ -93,10 +109,14 @@ def add_statement_parsers(cls):
         condition = self.parse_expression()
         self.consume(TokenType.RPAREN, "Expected ')' after if condition.")
         
+        # Need to check for LBRACE for the block
+        self.consume(TokenType.LBRACE, "Expected '{' to start if block.")
         then_block = self.parse_block()
         
         else_block: Optional[Block] = None
         if self.match(TokenType.ELSE):
+            # Need to check for LBRACE for the else block
+            self.consume(TokenType.LBRACE, "Expected '{' to start else block.")
             else_block = self.parse_block()
             
         return IfStatement(condition, then_block, else_block, start_token.line, start_token.column)
@@ -108,24 +128,27 @@ def add_statement_parsers(cls):
         condition = self.parse_expression()
         self.consume(TokenType.RPAREN, "Expected ')' after while condition.")
         
+        # Need to check for LBRACE for the block
+        self.consume(TokenType.LBRACE, "Expected '{' to start while block.")
         body = self.parse_block()
         
         return WhileLoop(condition, body, start_token.line, start_token.column)
 
     def parse_for_loop(self) -> ForLoop:
         """Parse a for loop: for (initializer; condition; update) body_block"""
-        # Placeholder implementation
         start_token = self.previous() # The 'for' token
         self.consume(TokenType.LPAREN, "Expected '(' after 'for'.")
         
         initializer: Optional[Statement] = None
         if not self.check(TokenType.SEMICOLON):
             if self.match(TokenType.VAR):
-                initializer = self.parse_variable_declaration() # Reuses var parsing
+                 # Need to backtrack 'var' since parse_variable_declaration expects it
+                 self.current -= 1 
+                 initializer = self.parse_variable_declaration()
             else:
-                initializer = self.parse_expression_statement() # Allows expression like i = 0
+                initializer = self.parse_expression_statement()
         else:
-             self.consume(TokenType.SEMICOLON, "Expected ';' after for initializer.") # Consume the semicolon if initializer is empty
+             self.consume(TokenType.SEMICOLON, "Expected ';' after for initializer.")
 
         condition: Optional[Expression] = None
         if not self.check(TokenType.SEMICOLON):
@@ -134,13 +157,14 @@ def add_statement_parsers(cls):
 
         update: Optional[Statement] = None
         if not self.check(TokenType.RPAREN):
-             # For update, we expect an expression, typically assignment or increment/decrement
-             # We wrap it in an ExpressionStatement
              update_expr = self.parse_expression()
+             # Wrap the update expression in a statement
              update = ExpressionStatement(update_expr, update_expr.line, update_expr.column)
              
         self.consume(TokenType.RPAREN, "Expected ')' after for clauses.")
         
+        # Need to check for LBRACE for the block
+        self.consume(TokenType.LBRACE, "Expected '{' to start for block.")
         body = self.parse_block()
         
         return ForLoop(initializer, condition, update, body, start_token.line, start_token.column)
@@ -163,7 +187,8 @@ def add_statement_parsers(cls):
 
     def parse_import(self) -> ImportStatement:
         """Parse an import statement: import module [as alias]; or import module.{elem1, elem2};"""
-        # Basic implementation - needs refinement for aliases and specific elements
+        # This method is primarily for potential future use if imports are allowed elsewhere.
+        # Top-level parsing happens in Parser.parse()
         start_token = self.previous() # The 'import' token
         module_token = self.consume(TokenType.IDENTIFIER, "Expected module name.")
         module = Identifier(module_token.value, module_token.line, module_token.column)
@@ -174,9 +199,8 @@ def add_statement_parsers(cls):
         self.consume(TokenType.SEMICOLON, "Expected ';' after import statement.")
         return ImportStatement(module, elements, start_token.line, start_token.column)
 
-    def parse_function(self) -> FunctionDeclaration:
-        """Parse a function declaration: func name(params) -> return_type { body }"""
-        # Placeholder implementation
+    def parse_function(self, decorators: List[str]) -> FunctionDeclaration:
+        """Parse a function declaration: [decorators] func name(params) -> return_type { body }"""
         start_token = self.previous() # The 'func' token
         name_token = self.consume(TokenType.IDENTIFIER, "Expected function name.")
         name = Identifier(name_token.value, name_token.line, name_token.column)
@@ -189,15 +213,13 @@ def add_statement_parsers(cls):
         if self.match(TokenType.ARROW):
             return_type = self.parse_type_annotation()
             
+        self.consume(TokenType.LBRACE, "Expected '{' before function body.")
         body = self.parse_block()
-        
-        # TODO: Parse decorators if needed
-        decorators = []
-        
+                
         return FunctionDeclaration(name, parameters, return_type, body, decorators, start_token.line, start_token.column)
 
-    def parse_model(self) -> ModelDeclaration:
-        """Parse a model declaration: model name { layers; components; forward; train; }"""
+    def parse_model(self, decorators: List[str]) -> ModelDeclaration:
+        """Parse a model declaration: [decorators] model name { layers; components; forward; train; }"""
         # Placeholder implementation - complex structure
         start_token = self.previous() # The 'model' token
         name_token = self.consume(TokenType.IDENTIFIER, "Expected model name.")
@@ -227,9 +249,6 @@ def add_statement_parsers(cls):
 
         self.consume(TokenType.RBRACE, "Expected '}' after model body.")
         
-        # TODO: Parse decorators if needed
-        decorators = []
-
         # Use default ForwardPassDefinition until properly parsed
         if forward_pass is None:
              forward_pass = ForwardPassDefinition(line=start_token.line, column=start_token.column)
@@ -275,19 +294,23 @@ def add_statement_parsers(cls):
             self.consume(TokenType.LBRACKET, "Expected '[' after 'tensor'.")
             element_type = self.parse_type_annotation()
             shape: List[Union[int, str]] = []
-            while self.match(TokenType.COMMA):
-                if self.check(TokenType.INT):
-                    dim_token = self.advance()
-                    shape.append(int(dim_token.value))
-                elif self.check(TokenType.IDENTIFIER):
-                    # Allow identifiers for dynamic shapes (e.g., 'batch_size')
-                    dim_token = self.advance()
-                    shape.append(dim_token.value)
-                else:
-                    self.error(self.peek(), "Expected integer literal or identifier for tensor dimension.")
-                    # Attempt recovery by skipping until comma or bracket
-                    while not self.check(TokenType.COMMA) and not self.check(TokenType.RBRACKET) and not self.is_at_end():
-                        self.advance()
+            # Check if shape is provided
+            if self.match(TokenType.COMMA):
+                while True:
+                    if self.check(TokenType.INT):
+                        dim_token = self.advance()
+                        shape.append(int(dim_token.value))
+                    elif self.check(TokenType.IDENTIFIER):
+                        # Allow identifiers for dynamic shapes (e.g., 'batch_size')
+                        dim_token = self.advance()
+                        shape.append(dim_token.value)
+                    else:
+                        self.error(self.peek(), "Expected integer literal or identifier for tensor dimension.")
+                        # Attempt recovery by skipping until comma or bracket
+                        while not self.check(TokenType.COMMA) and not self.check(TokenType.RBRACKET) and not self.is_at_end():
+                            self.advance()
+                    if not self.match(TokenType.COMMA):
+                         break # Exit shape dimension loop
             self.consume(TokenType.RBRACKET, "Expected ']' after tensor shape.")
             return TensorType(element_type, shape, start_token.line, start_token.column)
         elif self.match(TokenType.PROB):
