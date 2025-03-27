@@ -220,7 +220,6 @@ def add_statement_parsers(cls):
 
     def parse_model(self, decorators: List[str]) -> ModelDeclaration:
         """Parse a model declaration: [decorators] model name { layers; components; forward; train; }"""
-        # Placeholder implementation - complex structure
         start_token = self.previous() # The 'model' token
         name_token = self.consume(TokenType.IDENTIFIER, "Expected model name.")
         name = Identifier(name_token.value, name_token.line, name_token.column)
@@ -232,28 +231,130 @@ def add_statement_parsers(cls):
         forward_pass = None
         train_method = None
         
-        # TODO: Implement parsing for layers, components, forward, train blocks
-        # Example structure (needs proper parsing logic):
-        # while not self.check(TokenType.RBRACE) and not self.is_at_end():
-        #     if self.match(TokenType.LAYERS):
-        #         # parse layers block
-        #     elif self.match(TokenType.COMPONENTS):
-        #         # parse components block
-        #     elif self.match(TokenType.FORWARD):
-        #         # parse forward pass
-        #     elif self.match(TokenType.TRAIN):
-        #         # parse train method
-        #     else:
-        #         self.error(self.peek(), "Expected 'layers', 'components', 'forward', or 'train' in model body.")
-        #         self.advance()
+        while not self.check(TokenType.RBRACE) and not self.is_at_end():
+            if self.match(TokenType.LAYERS):
+                layers = self.parse_layers_block()
+                self.consume(TokenType.SEMICOLON, "Expected ';' after layers block.")
+            elif self.match(TokenType.COMPONENTS):
+                components = self.parse_components_block()
+                self.consume(TokenType.SEMICOLON, "Expected ';' after components block.")
+            elif self.match(TokenType.FORWARD):
+                if forward_pass is not None:
+                    self.error(self.previous(), "Duplicate 'forward' block found in model.")
+                forward_pass = self.parse_forward_pass()
+                # Forward pass block ends with '}', no semicolon needed here
+            elif self.match(TokenType.TRAIN):
+                if train_method is not None:
+                    self.error(self.previous(), "Duplicate 'train' block found in model.")
+                train_method = self.parse_train_method()
+                # Train method block ends with '}', no semicolon needed here
+            else:
+                self.error(self.peek(), "Expected 'layers', 'components', 'forward', or 'train' in model body.")
+                self.synchronize() # Attempt to recover
 
         self.consume(TokenType.RBRACE, "Expected '}' after model body.")
         
-        # Use default ForwardPassDefinition until properly parsed
+        # Ensure forward pass is defined
         if forward_pass is None:
-             forward_pass = ForwardPassDefinition(line=start_token.line, column=start_token.column)
+             # Create a default/empty one if needed, or raise error
+             # forward_pass = ForwardPassDefinition(line=start_token.line, column=start_token.column)
+             raise self.error(name_token, "Model must contain a 'forward' block.")
 
         return ModelDeclaration(name, layers, components, forward_pass, train_method, decorators, start_token.line, start_token.column)
+
+    def parse_layers_block(self) -> List[LayerDefinition]:
+        """Parse the layers block: layers { name: Type(args...); ... }"""
+        layers = []
+        self.consume(TokenType.LBRACE, "Expected '{' after 'layers' keyword.")
+        while not self.check(TokenType.RBRACE) and not self.is_at_end():
+            layer_name_token = self.consume(TokenType.IDENTIFIER, "Expected layer name.")
+            layer_name = Identifier(layer_name_token.value, layer_name_token.line, layer_name_token.column)
+            
+            self.consume(TokenType.COLON, "Expected ':' after layer name.")
+            
+            layer_type_token = self.consume(TokenType.IDENTIFIER, "Expected layer type (e.g., Dense, Conv2D).")
+            layer_type = Identifier(layer_type_token.value, layer_type_token.line, layer_type_token.column)
+            
+            self.consume(TokenType.LPAREN, "Expected '(' after layer type.")
+            arguments = []
+            if not self.check(TokenType.RPAREN):
+                arguments.append(self.parse_expression())
+                while self.match(TokenType.COMMA):
+                    arguments.append(self.parse_expression())
+            self.consume(TokenType.RPAREN, "Expected ')' after layer arguments.")
+            
+            self.consume(TokenType.SEMICOLON, "Expected ';' after layer definition.")
+            layers.append(LayerDefinition(layer_name, layer_type, arguments, layer_name_token.line, layer_name_token.column))
+            
+        self.consume(TokenType.RBRACE, "Expected '}' after layers block.")
+        return layers
+
+    def parse_components_block(self) -> List[LayerDefinition]:
+        """Parse the components block (similar structure to layers): components { name: ModelType(args...); ... }"""
+        # For now, reuses LayerDefinition structure. Might need a ComponentDefinition later.
+        components = []
+        self.consume(TokenType.LBRACE, "Expected '{' after 'components' keyword.")
+        while not self.check(TokenType.RBRACE) and not self.is_at_end():
+            comp_name_token = self.consume(TokenType.IDENTIFIER, "Expected component name.")
+            comp_name = Identifier(comp_name_token.value, comp_name_token.line, comp_name_token.column)
+            
+            self.consume(TokenType.COLON, "Expected ':' after component name.")
+            
+            comp_type_token = self.consume(TokenType.IDENTIFIER, "Expected component model type.")
+            comp_type = Identifier(comp_type_token.value, comp_type_token.line, comp_type_token.column)
+            
+            self.consume(TokenType.LPAREN, "Expected '(' after component type.")
+            arguments = []
+            if not self.check(TokenType.RPAREN):
+                arguments.append(self.parse_expression())
+                while self.match(TokenType.COMMA):
+                    arguments.append(self.parse_expression())
+            self.consume(TokenType.RPAREN, "Expected ')' after component arguments.")
+            
+            self.consume(TokenType.SEMICOLON, "Expected ';' after component definition.")
+            # Using LayerDefinition for now
+            components.append(LayerDefinition(comp_name, comp_type, arguments, comp_name_token.line, comp_name_token.column))
+            
+        self.consume(TokenType.RBRACE, "Expected '}' after components block.")
+        return components
+
+    def parse_forward_pass(self) -> ForwardPassDefinition:
+        """Parse the forward pass block: forward(params) -> return_type { body }"""
+        start_token = self.previous() # The 'forward' token
+        self.consume(TokenType.LPAREN, "Expected '(' after 'forward'.")
+        parameters = self.parse_parameter_list()
+        self.consume(TokenType.RPAREN, "Expected ')' after forward parameters.")
+        
+        return_type: Optional[TypeAnnotation] = None
+        if self.match(TokenType.ARROW):
+            return_type = self.parse_type_annotation()
+            
+        self.consume(TokenType.LBRACE, "Expected '{' before forward pass body.")
+        body = self.parse_block()
+        
+        return ForwardPassDefinition(parameters, return_type, body, start_token.line, start_token.column)
+
+    def parse_train_method(self) -> FunctionDeclaration:
+        """Parse the optional train method block: train(params) -> return_type { body }"""
+        # Structure is identical to a function declaration
+        start_token = self.previous() # The 'train' token
+        name = Identifier("train", start_token.line, start_token.column) # Fixed name
+        
+        self.consume(TokenType.LPAREN, "Expected '(' after 'train'.")
+        parameters = self.parse_parameter_list()
+        self.consume(TokenType.RPAREN, "Expected ')' after train parameters.")
+        
+        return_type: Optional[TypeAnnotation] = None
+        if self.match(TokenType.ARROW):
+            return_type = self.parse_type_annotation()
+            
+        self.consume(TokenType.LBRACE, "Expected '{' before train method body.")
+        body = self.parse_block()
+        
+        # Train method cannot have decorators
+        decorators = [] 
+        
+        return FunctionDeclaration(name, parameters, return_type, body, decorators, start_token.line, start_token.column)
 
     def parse_parameter_list(self) -> List[Parameter]:
         """Parse a list of parameters: (name: type, name: type = default, ...)"""
@@ -344,6 +445,10 @@ def add_statement_parsers(cls):
     cls.parse_import = parse_import # Add even if handled at top level
     cls.parse_function = parse_function # Add even if handled at top level
     cls.parse_model = parse_model # Add even if handled at top level
+    cls.parse_layers_block = parse_layers_block # New
+    cls.parse_components_block = parse_components_block # New
+    cls.parse_forward_pass = parse_forward_pass # New
+    cls.parse_train_method = parse_train_method # New
     cls.parse_parameter_list = parse_parameter_list
     cls.parse_type_annotation = parse_type_annotation
     
