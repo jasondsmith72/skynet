@@ -10,6 +10,8 @@ import logging
 import time
 import platform
 import os
+import subprocess
+import json
 from enum import Enum, auto
 from typing import Dict, List, Optional, Tuple, Any, Callable
 
@@ -258,31 +260,59 @@ class DeviceManager:
     
     def _discover_storage(self) -> List[Device]:
         """Discover storage devices in the system."""
-        # In a real implementation, this would enumerate storage controllers,
-        # disks, and other storage devices
-        
-        # For simulation, create a basic storage device
         storage_devices = []
         
-        # Create a simulated storage device
-        disk = Device(
-            device_id="DISK0",
-            device_class=DeviceClass.STORAGE,
-            name="Primary Storage",
-            vendor="ClarityOS Simulation",
-            model="Virtual SSD"
-        )
-        
-        disk.properties = {
-            "size_bytes": 256 * 1024 * 1024 * 1024,  # 256 GB
-            "type": "SSD",
-            "block_size": 4096,
-            "removable": False
-        }
-        
-        disk.state = DeviceState.ENABLED
-        storage_devices.append(disk)
-        
+        try:
+            # Use lsblk to get storage device info in JSON format
+            result = subprocess.run(
+                ['lsblk', '--json', '-o', 'NAME,SIZE,TYPE,MODEL'],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            devices = json.loads(result.stdout)['blockdevices']
+
+            for i, device_info in enumerate(devices):
+                if device_info.get('type') in ['disk', 'rom']:
+                    disk = Device(
+                        device_id=f"DISK{i}",
+                        device_class=DeviceClass.STORAGE,
+                        name=device_info.get('name', f'Storage Device {i}'),
+                        vendor="Unknown", # lsblk doesn't easily provide vendor
+                        model=device_info.get('model', 'Unknown')
+                    )
+
+                    disk.properties = {
+                        "size_bytes": int(device_info.get('size', 0)),
+                        "type": device_info.get('type', 'UNKNOWN'),
+                        "block_size": 4096, # A common default
+                        "removable": False # Cannot easily determine this from lsblk
+                    }
+
+                    disk.state = DeviceState.ENABLED
+                    storage_devices.append(disk)
+
+        except (FileNotFoundError, subprocess.CalledProcessError, json.JSONDecodeError, IndexError, ValueError):
+            logger.warning("Could not get storage info from lsblk. Falling back to simulation.")
+            # Fallback to the old simulation
+            disk = Device(
+                device_id="DISK0",
+                device_class=DeviceClass.STORAGE,
+                name="Primary Storage",
+                vendor="ClarityOS Simulation",
+                model="Virtual SSD"
+            )
+
+            disk.properties = {
+                "size_bytes": 256 * 1024 * 1024 * 1024,  # 256 GB
+                "type": "SSD",
+                "block_size": 4096,
+                "removable": False
+            }
+
+            disk.state = DeviceState.ENABLED
+            storage_devices.append(disk)
+
         return storage_devices
     
     def _discover_network(self) -> List[Device]:

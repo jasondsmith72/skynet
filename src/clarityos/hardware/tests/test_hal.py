@@ -56,5 +56,22 @@ class TestHardwareAbstrationLayer(unittest.TestCase):
         self.assertGreater(memory.properties.get('size_bytes'), 0)
 
 
+    def test_discover_storage(self):
+        """
+        Tests that the _discover_storage method returns a valid storage device.
+        """
+        storage_devices = self.device_manager._discover_storage()
+
+        # Should discover at least one storage device
+        self.assertGreater(len(storage_devices), 0)
+
+        storage = storage_devices[0]
+        self.assertEqual(storage.device_class, DeviceClass.STORAGE)
+
+        # Check properties
+        self.assertIsInstance(storage.properties.get('size_bytes'), int)
+        self.assertGreaterEqual(storage.properties.get('size_bytes'), 0)
+
+
 if __name__ == "__main__":
     unittest.main()
