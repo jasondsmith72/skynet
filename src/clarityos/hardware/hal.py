@@ -204,37 +204,56 @@ class DeviceManager:
     
     def _discover_memory(self) -> List[Device]:
         """Discover memory devices in the system."""
-        # In a real implementation, this would use SMBIOS tables,
-        # memory controller information, and other mechanisms
-        
-        # For simulation, create basic memory devices based on memory map
         memory_devices = []
         
-        # Get memory map from firmware
-        memory_map = self.firmware.get_memory_map()
-        
-        # Create a simulated RAM device for each usable memory region
-        usable_regions = self.firmware.get_usable_memory()
-        
-        for i, region in enumerate(usable_regions):
+        try:
+            with open('/proc/meminfo', 'r') as f:
+                meminfo = f.read()
+
+            memtotal_line = [line for line in meminfo.split('\n') if 'MemTotal' in line][0]
+            memtotal_kb = int(memtotal_line.split()[1])
+            memtotal_bytes = memtotal_kb * 1024
+
             memory_device = Device(
-                device_id=f"MEM{i}",
+                device_id="MEM0",
                 device_class=DeviceClass.MEMORY,
-                name=f"RAM Region {i}",
-                vendor="ClarityOS Simulation",
-                model="Dynamic RAM"
+                name="Main Memory",
+                vendor="Unknown",
+                model="DRAM"
             )
             
             memory_device.properties = {
-                "size_bytes": region.size_bytes,
-                "type": "DDR4",
-                "physical_address": region.physical_start,
-                "ecc": False
+                "size_bytes": memtotal_bytes,
+                "type": "DRAM",
+                "physical_address": 0, # Not easily available
+                "ecc": False # Not easily available
             }
             
             memory_device.state = DeviceState.ENABLED
             memory_devices.append(memory_device)
-        
+
+        except (FileNotFoundError, IndexError, ValueError):
+            logger.warning("Could not get memory info from /proc/meminfo. Falling back to simulation.")
+            # Fallback to the old simulation
+            memory_map = self.firmware.get_memory_map()
+            usable_regions = self.firmware.get_usable_memory()
+            for i, region in enumerate(usable_regions):
+                memory_device = Device(
+                    device_id=f"MEM{i}",
+                    device_class=DeviceClass.MEMORY,
+                    name=f"RAM Region {i}",
+                    vendor="ClarityOS Simulation",
+                    model="Dynamic RAM"
+                )
+                memory_device.properties = {
+                    "size_bytes": region.size_bytes,
+                    "type": "DDR4",
+                    "physical_address": region.physical_start,
+                    "ecc": False
+                }
+                memory_device.state = DeviceState.ENABLED
+                memory_devices.append(memory_device)
+
         return memory_devices
     
     def _discover_storage(self) -> List[Device]:

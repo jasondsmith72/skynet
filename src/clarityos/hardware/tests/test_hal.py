@@ -39,5 +39,22 @@ class TestHardwareAbstrationLayer(unittest.TestCase):
         self.assertEqual(cpu.properties.get('cores'), cores)
 
 
+    def test_discover_memory(self):
+        """
+        Tests that the _discover_memory method returns a valid memory device.
+        """
+        memory_devices = self.device_manager._discover_memory()
+
+        # Should discover at least one memory device
+        self.assertGreater(len(memory_devices), 0)
+
+        memory = memory_devices[0]
+        self.assertEqual(memory.device_class, DeviceClass.MEMORY)
+
+        # Check properties
+        self.assertIsInstance(memory.properties.get('size_bytes'), int)
+        self.assertGreater(memory.properties.get('size_bytes'), 0)
+
+
 if __name__ == "__main__":
     unittest.main()
