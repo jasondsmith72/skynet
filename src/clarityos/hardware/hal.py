@@ -8,8 +8,6 @@ and allowing ClarityOS to operate across diverse hardware platforms.
 
 import logging
 import time
-import platform
-import os
 from enum import Enum, auto
 from typing import Dict, List, Optional, Tuple, Any, Callable
 
@@ -172,29 +170,27 @@ class DeviceManager:
     
     def _discover_processors(self) -> List[Device]:
         """Discover CPU/processors in the system."""
+        # In a real implementation, this would use CPUID instructions,
+        # ACPI tables, and other mechanisms to identify processors
+
+        # For simulation, create a basic CPU
         processors = []
         
-        # Create a CPU device using platform and os modules
+        # Create a simulated CPU
         cpu = Device(
             device_id="CPU0",
             device_class=DeviceClass.PROCESSOR,
-            name=platform.processor() or "Unknown CPU",
-            vendor="Unknown", # platform module does not provide vendor
-            model=platform.processor() or "Unknown"
+            name="Primary CPU",
+            vendor="ClarityOS Simulation",
+            model="Quad-Core Processor"
         )
-
-        # Get core count, fallback to 1 if not available
-        try:
-            cores = os.cpu_count()
-        except NotImplementedError:
-            cores = 1
         
         cpu.properties = {
-            "cores": cores,
-            "threads": cores, # A reasonable assumption if thread count is not available
-            "frequency_mhz": 0, # Not available from platform/os
-            "architecture": platform.machine(),
-            "features": [] # Not available from platform/os
+            "cores": 4,
+            "threads": 8,
+            "frequency_mhz": 3200,
+            "architecture": "x86_64",
+            "features": ["sse", "sse2", "avx", "aes"]
         }
         
         cpu.state = DeviceState.ENABLED
