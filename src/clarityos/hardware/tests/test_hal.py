@@ -109,5 +109,20 @@ class TestHardwareAbstrationLayer(unittest.TestCase):
         self.assertEqual(len(nic.properties.get('mac_address').split(':')), 6)
 
 
+    def test_discover_display(self):
+        """
+        Tests that the _discover_display method returns a valid simulated display device.
+        """
+        display_devices = self.device_manager._discover_display()
+
+        # Should discover one simulated display device
+        self.assertEqual(len(display_devices), 1)
+
+        display = display_devices[0]
+        self.assertEqual(display.device_class, DeviceClass.DISPLAY)
+        self.assertEqual(display.properties.get('resolution_width'), 1920)
+        self.assertEqual(display.properties.get('resolution_height'), 1080)
+
+
 if __name__ == "__main__":
     unittest.main()
