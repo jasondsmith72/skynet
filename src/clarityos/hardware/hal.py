@@ -378,9 +378,10 @@ class DeviceManager:
     def _discover_display(self) -> List[Device]:
         """Discover display devices in the system."""
         # In a real implementation, this would enumerate graphics cards, 
-        # monitors, and other display devices
+        # monitors, and other display devices using platform-specific APIs.
+        # This is not feasible in a simple, cross-platform way without a graphical server.
+        logger.info("Display detection is simulated. Creating a virtual display device.")
         
-        # For simulation, create a basic display device
         display_devices = []
         
         # Create a simulated display device
