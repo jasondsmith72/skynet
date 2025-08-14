@@ -8,6 +8,10 @@ and allowing ClarityOS to operate across diverse hardware platforms.
 
 import logging
 import time
+import platform
+import os
+import subprocess
+import json
 from enum import Enum, auto
 from typing import Dict, List, Optional, Tuple, Any, Callable
 
@@ -170,27 +174,29 @@ class DeviceManager:
     
     def _discover_processors(self) -> List[Device]:
         """Discover CPU/processors in the system."""
-        # In a real implementation, this would use CPUID instructions,
-        # ACPI tables, and other mechanisms to identify processors
-        
-        # For simulation, create a basic CPU
         processors = []
         
-        # Create a simulated CPU
+        # Create a CPU device using platform and os modules
         cpu = Device(
             device_id="CPU0",
             device_class=DeviceClass.PROCESSOR,
-            name="Primary CPU",
-            vendor="ClarityOS Simulation",
-            model="Quad-Core Processor"
+            name=platform.processor() or "Unknown CPU",
+            vendor="Unknown", # platform module does not provide vendor
+            model=platform.processor() or "Unknown"
         )
+
+        # Get core count, fallback to 1 if not available
+        try:
+            cores = os.cpu_count()
+        except NotImplementedError:
+            cores = 1
         
         cpu.properties = {
-            "cores": 4,
-            "threads": 8,
-            "frequency_mhz": 3200,
-            "architecture": "x86_64",
-            "features": ["sse", "sse2", "avx", "aes"]
+            "cores": cores,
+            "threads": cores, # A reasonable assumption if thread count is not available
+            "frequency_mhz": 0, # Not available from platform/os
+            "architecture": platform.machine(),
+            "features": [] # Not available from platform/os
         }
         
         cpu.state = DeviceState.ENABLED
@@ -200,94 +206,173 @@ class DeviceManager:
     
     def _discover_memory(self) -> List[Device]:
         """Discover memory devices in the system."""
-        # In a real implementation, this would use SMBIOS tables,
-        # memory controller information, and other mechanisms
-        
-        # For simulation, create basic memory devices based on memory map
         memory_devices = []
         
-        # Get memory map from firmware
-        memory_map = self.firmware.get_memory_map()
-        
-        # Create a simulated RAM device for each usable memory region
-        usable_regions = self.firmware.get_usable_memory()
-        
-        for i, region in enumerate(usable_regions):
+        try:
+            with open('/proc/meminfo', 'r') as f:
+                meminfo = f.read()
+
+            memtotal_line = [line for line in meminfo.split('\n') if 'MemTotal' in line][0]
+            memtotal_kb = int(memtotal_line.split()[1])
+            memtotal_bytes = memtotal_kb * 1024
+
             memory_device = Device(
-                device_id=f"MEM{i}",
+                device_id="MEM0",
                 device_class=DeviceClass.MEMORY,
-                name=f"RAM Region {i}",
-                vendor="ClarityOS Simulation",
-                model="Dynamic RAM"
+                name="Main Memory",
+                vendor="Unknown",
+                model="DRAM"
             )
             
             memory_device.properties = {
-                "size_bytes": region.size_bytes,
-                "type": "DDR4",
-                "physical_address": region.physical_start,
-                "ecc": False
+                "size_bytes": memtotal_bytes,
+                "type": "DRAM",
+                "physical_address": 0, # Not easily available
+                "ecc": False # Not easily available
             }
             
             memory_device.state = DeviceState.ENABLED
             memory_devices.append(memory_device)
-        
+
+        except (FileNotFoundError, IndexError, ValueError):
+            logger.warning("Could not get memory info from /proc/meminfo. Falling back to simulation.")
+            # Fallback to the old simulation
+            memory_map = self.firmware.get_memory_map()
+            usable_regions = self.firmware.get_usable_memory()
+            for i, region in enumerate(usable_regions):
+                memory_device = Device(
+                    device_id=f"MEM{i}",
+                    device_class=DeviceClass.MEMORY,
+                    name=f"RAM Region {i}",
+                    vendor="ClarityOS Simulation",
+                    model="Dynamic RAM"
+                )
+                memory_device.properties = {
+                    "size_bytes": region.size_bytes,
+                    "type": "DDR4",
+                    "physical_address": region.physical_start,
+                    "ecc": False
+                }
+                memory_device.state = DeviceState.ENABLED
+                memory_devices.append(memory_device)
+
         return memory_devices
     
     def _discover_storage(self) -> List[Device]:
         """Discover storage devices in the system."""
-        # In a real implementation, this would enumerate storage controllers,
-        # disks, and other storage devices
-        
-        # For simulation, create a basic storage device
         storage_devices = []
         
-        # Create a simulated storage device
-        disk = Device(
-            device_id="DISK0",
-            device_class=DeviceClass.STORAGE,
-            name="Primary Storage",
-            vendor="ClarityOS Simulation",
-            model="Virtual SSD"
-        )
-        
-        disk.properties = {
-            "size_bytes": 256 * 1024 * 1024 * 1024,  # 256 GB
-            "type": "SSD",
-            "block_size": 4096,
-            "removable": False
-        }
-        
-        disk.state = DeviceState.ENABLED
-        storage_devices.append(disk)
-        
+        try:
+            # Use lsblk to get storage device info in JSON format
+            result = subprocess.run(
+                ['lsblk', '--json', '-o', 'NAME,SIZE,TYPE,MODEL'],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            devices = json.loads(result.stdout)['blockdevices']
+
+            for i, device_info in enumerate(devices):
+                if device_info.get('type') in ['disk', 'rom']:
+                    disk = Device(
+                        device_id=f"DISK{i}",
+                        device_class=DeviceClass.STORAGE,
+                        name=device_info.get('name', f'Storage Device {i}'),
+                        vendor="Unknown", # lsblk doesn't easily provide vendor
+                        model=device_info.get('model', 'Unknown')
+                    )
+
+                    disk.properties = {
+                        "size_bytes": int(device_info.get('size', 0)),
+                        "type": device_info.get('type', 'UNKNOWN'),
+                        "block_size": 4096, # A common default
+                        "removable": False # Cannot easily determine this from lsblk
+                    }
+
+                    disk.state = DeviceState.ENABLED
+                    storage_devices.append(disk)
+
+        except (FileNotFoundError, subprocess.CalledProcessError, json.JSONDecodeError, IndexError, ValueError):
+            logger.warning("Could not get storage info from lsblk. Falling back to simulation.")
+            # Fallback to the old simulation
+            disk = Device(
+                device_id="DISK0",
+                device_class=DeviceClass.STORAGE,
+                name="Primary Storage",
+                vendor="ClarityOS Simulation",
+                model="Virtual SSD"
+            )
+
+            disk.properties = {
+                "size_bytes": 256 * 1024 * 1024 * 1024,  # 256 GB
+                "type": "SSD",
+                "block_size": 4096,
+                "removable": False
+            }
+
+            disk.state = DeviceState.ENABLED
+            storage_devices.append(disk)
+
         return storage_devices
     
     def _discover_network(self) -> List[Device]:
         """Discover network devices in the system."""
-        # In a real implementation, this would enumerate network interfaces
-        
-        # For simulation, create a basic network device
         network_devices = []
         
-        # Create a simulated network device
-        nic = Device(
-            device_id="NET0",
-            device_class=DeviceClass.NETWORK,
-            name="Primary Network Interface",
-            vendor="ClarityOS Simulation",
-            model="Virtual Ethernet"
-        )
-        
-        nic.properties = {
-            "mac_address": "00:11:22:33:44:55",
-            "speed_mbps": 1000,
-            "duplex": "full",
-            "wireless": False
-        }
-        
-        nic.state = DeviceState.ENABLED
-        network_devices.append(nic)
-        
+        try:
+            # Use `ip -j addr` to get network interface info in JSON format
+            result = subprocess.run(
+                ['ip', '-j', 'addr'],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            interfaces = json.loads(result.stdout)
+
+            for i, iface_info in enumerate(interfaces):
+                # Skip the loopback interface
+                if iface_info.get('ifname') == 'lo':
+                    continue
+
+                nic = Device(
+                    device_id=f"NET{i}",
+                    device_class=DeviceClass.NETWORK,
+                    name=iface_info.get('ifname', f'Network Interface {i}'),
+                    vendor="Unknown", # Not easily available from `ip`
+                    model="Unknown"
+                )
+
+                nic.properties = {
+                    "mac_address": iface_info.get('address', '00:00:00:00:00:00'),
+                    "speed_mbps": iface_info.get('link_speed'), # May be None
+                    "duplex": iface_info.get('duplex'), # May be None
+                    "wireless": 'wlan' in iface_info.get('ifname', '')
+                }
+
+                nic.state = DeviceState.ENABLED
+                network_devices.append(nic)
+
+        except (FileNotFoundError, subprocess.CalledProcessError, json.JSONDecodeError, IndexError, ValueError):
+            logger.warning("Could not get network info from `ip` command. Falling back to simulation.")
+            # Fallback to the old simulation
+            nic = Device(
+                device_id="NET0",
+                device_class=DeviceClass.NETWORK,
+                name="Primary Network Interface",
+                vendor="ClarityOS Simulation",
+                model="Virtual Ethernet"
+            )
+
+            nic.properties = {
+                "mac_address": "00:11:22:33:44:55",
+                "speed_mbps": 1000,
+                "duplex": "full",
+                "wireless": False
+            }
+
+            nic.state = DeviceState.ENABLED
+            network_devices.append(nic)
+
         return network_devices
     
     def _discover_display(self) -> List[Device]:
