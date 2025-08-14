@@ -73,5 +73,23 @@ class TestHardwareAbstrationLayer(unittest.TestCase):
         self.assertGreaterEqual(storage.properties.get('size_bytes'), 0)
 
 
+    def test_discover_network(self):
+        """
+        Tests that the _discover_network method returns a valid network device.
+        """
+        network_devices = self.device_manager._discover_network()
+
+        # Should discover at least one network device
+        self.assertGreater(len(network_devices), 0)
+
+        nic = network_devices[0]
+        self.assertEqual(nic.device_class, DeviceClass.NETWORK)
+
+        # Check properties
+        self.assertIsInstance(nic.properties.get('mac_address'), str)
+        # A simple check for mac address format
+        self.assertEqual(len(nic.properties.get('mac_address').split(':')), 6)
+
+
 if __name__ == "__main__":
     unittest.main()

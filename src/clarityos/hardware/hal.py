@@ -317,30 +317,62 @@ class DeviceManager:
     
     def _discover_network(self) -> List[Device]:
         """Discover network devices in the system."""
-        # In a real implementation, this would enumerate network interfaces
-        
-        # For simulation, create a basic network device
         network_devices = []
         
-        # Create a simulated network device
-        nic = Device(
-            device_id="NET0",
-            device_class=DeviceClass.NETWORK,
-            name="Primary Network Interface",
-            vendor="ClarityOS Simulation",
-            model="Virtual Ethernet"
-        )
-        
-        nic.properties = {
-            "mac_address": "00:11:22:33:44:55",
-            "speed_mbps": 1000,
-            "duplex": "full",
-            "wireless": False
-        }
-        
-        nic.state = DeviceState.ENABLED
-        network_devices.append(nic)
-        
+        try:
+            # Use `ip -j addr` to get network interface info in JSON format
+            result = subprocess.run(
+                ['ip', '-j', 'addr'],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            interfaces = json.loads(result.stdout)
+
+            for i, iface_info in enumerate(interfaces):
+                # Skip the loopback interface
+                if iface_info.get('ifname') == 'lo':
+                    continue
+
+                nic = Device(
+                    device_id=f"NET{i}",
+                    device_class=DeviceClass.NETWORK,
+                    name=iface_info.get('ifname', f'Network Interface {i}'),
+                    vendor="Unknown", # Not easily available from `ip`
+                    model="Unknown"
+                )
+
+                nic.properties = {
+                    "mac_address": iface_info.get('address', '00:00:00:00:00:00'),
+                    "speed_mbps": iface_info.get('link_speed'), # May be None
+                    "duplex": iface_info.get('duplex'), # May be None
+                    "wireless": 'wlan' in iface_info.get('ifname', '')
+                }
+
+                nic.state = DeviceState.ENABLED
+                network_devices.append(nic)
+
+        except (FileNotFoundError, subprocess.CalledProcessError, json.JSONDecodeError, IndexError, ValueError):
+            logger.warning("Could not get network info from `ip` command. Falling back to simulation.")
+            # Fallback to the old simulation
+            nic = Device(
+                device_id="NET0",
+                device_class=DeviceClass.NETWORK,
+                name="Primary Network Interface",
+                vendor="ClarityOS Simulation",
+                model="Virtual Ethernet"
+            )
+
+            nic.properties = {
+                "mac_address": "00:11:22:33:44:55",
+                "speed_mbps": 1000,
+                "duplex": "full",
+                "wireless": False
+            }
+
+            nic.state = DeviceState.ENABLED
+            network_devices.append(nic)
+
         return network_devices
     
     def _discover_display(self) -> List[Device]:
