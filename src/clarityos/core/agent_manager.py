@@ -17,7 +17,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
-from clarityos.core.message_bus import MessagePriority, system_bus
+from .message_bus import MessagePriority, system_bus
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

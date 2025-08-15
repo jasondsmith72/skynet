@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
-from clarityos.core.message_bus import MessagePriority, system_bus
+from ..core.message_bus import MessagePriority, system_bus
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

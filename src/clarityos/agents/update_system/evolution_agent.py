@@ -18,11 +18,11 @@ import hashlib
 import shutil
 from typing import Dict, List, Set, Tuple, Optional, Any, Union
 
-from src.clarityos.core.message_bus import MessagePriority, system_bus
-from src.clarityos.agents.update_system.models import (
+from ...core.message_bus import MessagePriority, system_bus
+from .models import (
     UpdatePriority, UpdateStatus, SystemComponent, UpdatePackage
 )
-from src.clarityos.agents.update_system.utils import compare_versions
+from .utils import compare_versions
 
 # Configure logging
 logger = logging.getLogger(__name__)

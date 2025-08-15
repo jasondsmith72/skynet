@@ -14,7 +14,7 @@ import json
 import subprocess
 from typing import Dict, List, Optional, Any, Union
 
-from src.clarityos.core.message_bus import MessagePriority, system_bus
+from ...core.message_bus import MessagePriority, system_bus
 
 # Configure logging
 logger = logging.getLogger(__name__)

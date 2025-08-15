@@ -13,11 +13,11 @@ import json
 from datetime import datetime
 from typing import Dict, Optional, List, Any
 
-from src.clarityos.core.message_bus import MessageBus
-from src.clarityos.core.priority import Priority
-from src.clarityos.agents.system_evolution_agent import SystemEvolutionAgent
-from src.clarityos.kernel.kernel_updater import KernelUpdater
-from src.clarityos.kernel.restart_manager import RestartManager
+from .core.message_bus import MessageBus
+from .core.priority import Priority
+from .agents.system_evolution_agent import SystemEvolutionAgent
+from .kernel.kernel_updater import KernelUpdater
+from .kernel.restart_manager import RestartManager
 
 logger = logging.getLogger(__name__)
 

@@ -24,3 +24,15 @@ class Driver(ABC):
         Shuts down the driver.
         """
         pass
+
+class DriverRegistry:
+    """
+    A placeholder for the DriverRegistry.
+    """
+    pass
+
+class DriverStatus:
+    """
+    A placeholder for the DriverStatus.
+    """
+    pass

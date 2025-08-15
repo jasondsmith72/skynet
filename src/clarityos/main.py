@@ -13,9 +13,9 @@ import sys
 import json
 from typing import Dict, List, Optional
 
-from src.clarityos.core.agent_manager import agent_manager
-from src.clarityos.core.message_bus import MessagePriority, system_bus
-from src.clarityos.boot_update_integration import BootUpdateIntegration
+from .core.agent_manager import agent_manager
+from .core.message_bus import MessagePriority, system_bus
+from .boot_update_integration import BootUpdateIntegration
 
 # Configure logging
 logging.basicConfig(

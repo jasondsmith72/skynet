@@ -16,7 +16,7 @@ import subprocess
 import shutil
 from typing import Dict, List, Optional, Any, Union, Tuple
 
-from src.clarityos.core.message_bus import MessagePriority, system_bus
+from ...core.message_bus import MessagePriority, system_bus
 
 # Configure logging
 logger = logging.getLogger(__name__)

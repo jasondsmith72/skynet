@@ -10,7 +10,7 @@ import logging
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union, Callable
 
-from clarityos.core.message_bus import MessageBus, MessagePriority, system_bus
+from ..core.message_bus import MessageBus, MessagePriority, system_bus
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

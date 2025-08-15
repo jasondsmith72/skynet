@@ -1,6 +1,6 @@
 import unittest
-from clarity.compiler.parser import parse
-from clarity.compiler.ast import (
+from ..compiler.parser import parse
+from ..compiler.ast import (
     Program,
     FunctionDeclaration,
     # TryCatchStatement,

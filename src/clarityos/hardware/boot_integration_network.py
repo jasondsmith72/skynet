@@ -10,11 +10,11 @@ from typing import Dict, Any, Optional
 
 from .boot_integration import HardwareBootIntegration
 from .interfaces.network.network_boot_adapter import NetworkBootAdapter
-from .driver_framework import DriverManager
-from .hal import HardwareAbstractionLayer
-from .safety.security_manager import SecurityManager
-from .knowledge_repository import KnowledgeRepository
-from ..core.message_bus import MessageBus
+from clarityos.hardware.driver_framework import DriverManager
+from clarityos.hardware.hal import HardwareAbstractionLayer
+from clarityos.hardware.safety.security_manager import SecurityManager
+from clarityos.hardware.knowledge_repository import HardwareKnowledgeRepository as KnowledgeRepository
+from clarityos.core.message_bus import MessageBus
 
 # Configure logging
 logger = logging.getLogger(__name__)

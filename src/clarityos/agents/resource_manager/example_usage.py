@@ -22,10 +22,10 @@ logging.basicConfig(
 logger = logging.getLogger("ResourceManagerExample")
 
 # Import required components
-from clarityos.core.message_bus import MessageBus
-from clarityos.core.resource_types import ResourceType, ResourceRequest
-from clarityos.core.priority import Priority
-from clarityos.agents.resource_manager.resource_manager_agent import ResourceManagerAgent
+from ...core.message_bus import MessageBus
+from ...core.resource_types import ResourceType, ResourceRequest
+from ...core.priority import Priority
+from .resource_manager_agent import ResourceManagerAgent
 
 # Example component that requests resources
 class ExampleComponent:

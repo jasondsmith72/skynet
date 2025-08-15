@@ -10,8 +10,8 @@ import logging
 from typing import Dict, List, Optional, Tuple, Any, Union
 
 from .base_interface import NetworkInterface, NetworkInterfaceType, NetworkStatus, NetworkSecurity
-from ....driver_framework import DriverManager
-from ....safety.security_manager import SecurityManager
+from ...driver_framework import DriverManager
+from ...safety.security_manager import SecurityManager
 
 # Configure logging
 logger = logging.getLogger(__name__)

@@ -10,10 +10,7 @@ import sys
 import logging
 from pprint import pprint
 
-# Add the parent directory to sys.path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-
-from clarityos.development.code_understanding import CodeUnderstandingSystem
+from ..code_understanding import CodeUnderstandingSystem
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, 

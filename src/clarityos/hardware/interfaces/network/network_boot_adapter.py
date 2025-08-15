@@ -9,12 +9,12 @@ import logging
 from typing import Dict, Any, Optional
 
 from .network_integration import NetworkBootIntegration
-from ....hardware.boot_integration import HardwareBootIntegration
-from ....driver_framework import DriverManager
-from ....safety.security_manager import SecurityManager
-from ....knowledge_repository import KnowledgeRepository
-from ....core.message_bus import MessageBus
-from ....hal import HardwareAbstractionLayer
+from clarityos.hardware.boot_integration import HardwareBootIntegration
+from clarityos.hardware.driver_framework import DriverManager
+from clarityos.hardware.safety.security_manager import SecurityManager
+from clarityos.hardware.knowledge_repository import HardwareKnowledgeRepository as KnowledgeRepository
+from clarityos.core.message_bus import MessageBus
+from clarityos.hardware.hal import HardwareAbstractionLayer
 
 # Configure logging
 logger = logging.getLogger(__name__)

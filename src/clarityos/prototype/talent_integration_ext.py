@@ -11,13 +11,13 @@ import random
 import time
 from typing import Any, Dict, List, Optional, Tuple, Set, Union
 
-from clarityos.core.message_bus import MessagePriority, system_bus
-from clarityos.prototype.talent_models import (
+from ..core.message_bus import MessagePriority, system_bus
+from .talent_models import (
     TalentDomain, TalentLevel, IntegrationStatus,
     TalentCapability, AITalent, TalentRequest, TalentEvaluation,
     TalentLearningSession, KnowledgeTransfer, TalentOrchestrationTask
 )
-from clarityos.prototype.talent_execution import generate_knowledge_from_talent
+from .talent_execution_part2 import generate_knowledge_from_talent
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

@@ -8,10 +8,10 @@ during the boot process, with a focus on security and compatibility.
 import logging
 from typing import Dict, List, Optional, Any, Union
 
-from ....driver_framework import DriverManager
-from ....hal import HardwareAbstractionLayer
-from ....safety.security_manager import SecurityManager
-from ....knowledge_repository import KnowledgeRepository
+from ...driver_framework import DriverManager
+from ...hal import HardwareAbstractionLayer
+from ...safety.security_manager import SecurityManager
+from ...knowledge_repository import HardwareKnowledgeRepository as KnowledgeRepository
 
 # Configure logging
 logger = logging.getLogger(__name__)

@@ -15,11 +15,11 @@ import shutil
 import importlib
 from typing import Dict, List, Optional, Any, Tuple
 
-from src.clarityos.core.message_bus import MessagePriority, system_bus
-from src.clarityos.agents.update_system.models import (
+from ...core.message_bus import MessagePriority, system_bus
+from .models import (
     SystemComponent, UpdatePackage, UpdateStatus
 )
-from src.clarityos.agents.update_system.utils import calculate_file_checksum, create_backup_filename
+from .utils import calculate_file_checksum, create_backup_filename
 
 # Configure logging
 logger = logging.getLogger(__name__)

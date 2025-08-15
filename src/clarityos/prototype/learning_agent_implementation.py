@@ -11,8 +11,8 @@ import random
 import time
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
-from clarityos.core.message_bus import MessagePriority, system_bus
-from clarityos.prototype.learning_models import LearningDomain, KnowledgeItem, SystemComponent
+from ..core.message_bus import MessagePriority, system_bus
+from .learning_models import LearningDomain, KnowledgeItem, SystemComponent
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -28,7 +28,7 @@ def generate_dummy_code(domain: LearningDomain, component_name: str) -> str:
         return f"""
 class {class_name}:
     def __init__(self):
-        self.allocated_memory = {}
+        self.allocated_memory = {{}}
         self.total_memory = 1024 * 1024 * 1024  # 1GB
         self.used_memory = 0
         
@@ -70,7 +70,7 @@ class {class_name}:
         self.time_slice = 100  # milliseconds
         
     def add_process(self, process_id: str, priority: int) -> None:
-        self.processes.append({{"id": process_id, "priority": priority, "state": "ready"}})
+        self.processes.append({{ "id": process_id, "priority": priority, "state": "ready" }})
         self.processes.sort(key=lambda p: p["priority"])
         
     async def schedule(self) -> Optional[str]:
@@ -101,8 +101,8 @@ class {class_name}:
         return f"""
 class {class_name}:
     def __init__(self):
-        self.files = {}
-        self.content_index = {}
+        self.files = {{}}
+        self.content_index = {{}}
         
     async def write_file(self, path: str, content: bytes, metadata: Dict[str, Any] = None) -> bool:
         self.files[path] = {{"content": content, "metadata": metadata or {{}}, "created": time.time()}}
@@ -145,12 +145,12 @@ class {class_name}:
         return f"""
 class {class_name}:
     def __init__(self):
-        self.connections = {}
-        self.routing_table = {}
+        self.connections = {{}}
+        self.routing_table = {{}}
         
     async def create_connection(self, source: str, destination: str) -> str:
-        connection_id = f"{{source}}_{{destination}}_{{{random.randint(1000, 9999)}}}"
-        self.connections[connection_id] = {{"source": source, "destination": destination, "state": "established"}}
+        connection_id = f"{source}_{destination}_{random.randint(1000, 9999)}"
+        self.connections[connection_id] = {{ "source": source, "destination": destination, "state": "established" }}
         return connection_id
         
     async def send_data(self, connection_id: str, data: bytes) -> bool:
@@ -172,15 +172,15 @@ class {class_name}:
         return f"""
 class {class_name}:
     def __init__(self):
-        self.permissions = {}
-        self.active_sessions = {}
+        self.permissions = {{}}
+        self.active_sessions = {{}}
         
     async def authenticate(self, user_id: str, credentials: str) -> Optional[str]:
         # In a real system, would use knowledge about secure authentication
         # For the prototype, just simulate authentication
         if random.random() > 0.2:  # 80% success rate
-            session_id = f"{{user_id}}_{{{random.randint(10000, 99999)}}}"
-            self.active_sessions[session_id] = {{"user_id": user_id, "created": time.time()}}
+            session_id = f"{user_id}_{random.randint(10000, 99999)}"
+            self.active_sessions[session_id] = {{ "user_id": user_id, "created": time.time() }}
             return session_id
         return None
         
@@ -192,16 +192,16 @@ class {class_name}:
         
         # Check if user has permission
         # In a real system, would use knowledge about optimal permission models
-        user_permissions = self.permissions.get(user_id, {})
+        user_permissions = self.permissions.get(user_id, {{}})
         
-        return user_permissions.get(resource, {}).get(action, False)
+        return user_permissions.get(resource, {{}}).get(action, False)
         
     def grant_permission(self, user_id: str, resource: str, action: str) -> None:
         if user_id not in self.permissions:
-            self.permissions[user_id] = {}
+            self.permissions[user_id] = {{}}
             
         if resource not in self.permissions[user_id]:
-            self.permissions[user_id][resource] = {}
+            self.permissions[user_id][resource] = {{}}
             
         self.permissions[user_id][resource][action] = True
 """
@@ -221,7 +221,7 @@ class {class_name}:
     async def process(self, data: Dict[str, Any]) -> Dict[str, Any]:
         # Process some data
         # In a real system, would use knowledge about optimal processing
-        result = {{"processed": True, "input_size": len(data), "timestamp": time.time()}}
+        result = {{ "processed": True, "input_size": len(data), "timestamp": time.time() }}
         return result
         
     async def shutdown(self) -> bool:
@@ -293,7 +293,7 @@ async def implement_components(self):
         # Notify system about new component
         await system_bus.publish(
             message_type="system.component.created",
-            content={
+            content={{
                 "component_id": component_id,
                 "component_name": component_name,
                 "description": component_description,
@@ -301,7 +301,7 @@ async def implement_components(self):
                 "version": component.version,
                 "created_by": f"learning_agent_{self.agent_id}",
                 "timestamp": time.time()
-            },
+            }},
             source=f"learning_agent_{self.agent_id}",
             priority=MessagePriority.HIGH
         )
@@ -318,7 +318,7 @@ async def optimize_components(self):
     try:
         response = await system_bus.request_response(
             message_type="system.component.list",
-            content={},
+            content={{}},
             source=f"learning_agent_{self.agent_id}",
             timeout=5.0
         )
@@ -337,16 +337,16 @@ async def optimize_components(self):
                     # Report optimization
                     await system_bus.publish(
                         message_type="system.component.optimized",
-                        content={
+                        content={{
                             "component_id": component.get("id"),
                             "component_name": component.get("name"),
-                            "improvements": {
+                            "improvements": {{
                                 "performance": f"+{random.randint(5, 20)}%",
                                 "memory_usage": f"-{random.randint(5, 15)}%"
-                            },
+                            }},
                             "optimized_by": f"learning_agent_{self.agent_id}",
                             "timestamp": time.time()
-                        },
+                        }},
                         source=f"learning_agent_{self.agent_id}",
                         priority=MessagePriority.NORMAL
                     )
