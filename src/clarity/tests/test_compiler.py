@@ -172,12 +172,12 @@ class TestParser(unittest.TestCase):
         code = """
         model TestModel {
             layers {
-                layer1 = Conv2D(3, 32, kernelSize: 3);
-            }
+                layer1: Conv2D(3, 32, 3);
+            };
             
             forward(input: tensor<float32[3, 224, 224]>) -> tensor<float32[32, 222, 222]> {
                 return layer1(input);
-            }
+            };
         }
         """
         

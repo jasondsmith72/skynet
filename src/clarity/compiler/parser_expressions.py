@@ -36,11 +36,11 @@ def add_expression_parsers(cls):
             value = self.parse_assignment()
             
             if isinstance(expr, VariableReference):
-                return Assignment(expr, value, equals.line, equals.column)
+                return Assignment(target=expr, value=value, line=equals.line, column=equals.column)
             elif isinstance(expr, MemberAccess):
-                return Assignment(expr, value, equals.line, equals.column)
+                return Assignment(target=expr, value=value, line=equals.line, column=equals.column)
             elif isinstance(expr, ArrayAccess):
-                return Assignment(expr, value, equals.line, equals.column)
+                return Assignment(target=expr, value=value, line=equals.line, column=equals.column)
             
             self.error(equals, "Invalid assignment target.")
         
@@ -53,7 +53,7 @@ def add_expression_parsers(cls):
         while self.match(TokenType.OR):
             operator = self.previous().value
             right = self.parse_logical_and()
-            expr = BinaryOperation(expr, operator, right, expr.line, expr.column)
+            expr = BinaryOperation(left=expr, operator=operator, right=right, line=expr.line, column=expr.column)
         
         return expr
     
@@ -64,7 +64,7 @@ def add_expression_parsers(cls):
         while self.match(TokenType.AND):
             operator = self.previous().value
             right = self.parse_equality()
-            expr = BinaryOperation(expr, operator, right, expr.line, expr.column)
+            expr = BinaryOperation(left=expr, operator=operator, right=right, line=expr.line, column=expr.column)
         
         return expr
     
@@ -75,7 +75,7 @@ def add_expression_parsers(cls):
         while self.match(TokenType.EQ, TokenType.NEQ):
             operator = self.previous().value
             right = self.parse_comparison()
-            expr = BinaryOperation(expr, operator, right, expr.line, expr.column)
+            expr = BinaryOperation(left=expr, operator=operator, right=right, line=expr.line, column=expr.column)
         
         return expr
     
@@ -86,7 +86,7 @@ def add_expression_parsers(cls):
         while self.match(TokenType.LT, TokenType.GT, TokenType.LTE, TokenType.GTE):
             operator = self.previous().value
             right = self.parse_term()
-            expr = BinaryOperation(expr, operator, right, expr.line, expr.column)
+            expr = BinaryOperation(left=expr, operator=operator, right=right, line=expr.line, column=expr.column)
         
         return expr
     
@@ -97,7 +97,7 @@ def add_expression_parsers(cls):
         while self.match(TokenType.PLUS, TokenType.MINUS):
             operator = self.previous().value
             right = self.parse_factor()
-            expr = BinaryOperation(expr, operator, right, expr.line, expr.column)
+            expr = BinaryOperation(left=expr, operator=operator, right=right, line=expr.line, column=expr.column)
         
         return expr
     
@@ -108,7 +108,7 @@ def add_expression_parsers(cls):
         while self.match(TokenType.MULTIPLY, TokenType.DIVIDE):
             operator = self.previous().value
             right = self.parse_unary()
-            expr = BinaryOperation(expr, operator, right, expr.line, expr.column)
+            expr = BinaryOperation(left=expr, operator=operator, right=right, line=expr.line, column=expr.column)
         
         return expr
     
@@ -117,7 +117,7 @@ def add_expression_parsers(cls):
         if self.match(TokenType.MINUS, TokenType.NOT):
             operator = self.previous().value
             right = self.parse_unary()
-            return UnaryOperation(operator, right, right.line, right.column)
+            return UnaryOperation(operator=operator, operand=right, line=right.line, column=right.column)
         
         return self.parse_call()
     
@@ -132,8 +132,8 @@ def add_expression_parsers(cls):
             elif self.match(TokenType.DOT):
                 # Member access
                 name_token = self.consume(TokenType.IDENTIFIER, "Expected property name after '.'")
-                name = Identifier(name_token.value, name_token.line, name_token.column)
-                expr = MemberAccess(expr, name, expr.line, expr.column)
+                name = Identifier(name=name_token.value, line=name_token.line, column=name_token.column)
+                expr = MemberAccess(object=expr, member=name, line=expr.line, column=expr.column)
             elif self.match(TokenType.LBRACKET):
                 # Array/tensor access
                 indices = []
@@ -144,7 +144,7 @@ def add_expression_parsers(cls):
                         indices.append(self.parse_expression())
                 
                 close_token = self.consume(TokenType.RBRACKET, "Expected ']' after array indices")
-                expr = ArrayAccess(expr, indices, expr.line, expr.column)
+                expr = ArrayAccess(array=expr, indices=indices, line=expr.line, column=expr.column)
             else:
                 break
         
@@ -165,13 +165,13 @@ def add_expression_parsers(cls):
         # Determine if this is a model call or regular function call
         if isinstance(callee, MemberAccess) and callee.member.name == "new":
             # Handle model creation with .new()
-            return ModelCall(callee.object, arguments, callee.line, callee.column)
+            return ModelCall(model=callee.object, inputs=arguments, line=callee.line, column=callee.column)
         elif isinstance(callee, VariableReference) and callee.name.name in self.get_model_names():
             # Direct call to a model
-            return ModelCall(callee, arguments, callee.line, callee.column)
+            return ModelCall(model=callee, inputs=arguments, line=callee.line, column=callee.column)
         else:
             # Regular function call
-            return FunctionCall(callee, arguments, callee.line, callee.column)
+            return FunctionCall(function=callee, arguments=arguments, line=callee.line, column=callee.column)
     
     def get_model_names(self) -> List[str]:
         """Get a list of model names defined in the current program."""
@@ -198,8 +198,8 @@ def add_expression_parsers(cls):
             return BoolLiteral(value, self.previous().line, self.previous().column)
         
         if self.match(TokenType.IDENTIFIER):
-            name = Identifier(self.previous().value, self.previous().line, self.previous().column)
-            return VariableReference(name, name.line, name.column)
+            name = Identifier(name=self.previous().value, line=self.previous().line, column=self.previous().column)
+            return VariableReference(name=name, line=name.line, column=name.column)
         
         if self.match(TokenType.SELF):
             name = Identifier("self", self.previous().line, self.previous().column)

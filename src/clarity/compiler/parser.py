@@ -43,16 +43,25 @@ class Parser:
         # Parse imports, functions, and models until end of file
         while not self.is_at_end():
             try:
+                decorators = []
+                while self.check(TokenType.DECORATOR):
+                    decorators.append(self.advance().value)
+
                 if self.match(TokenType.IMPORT):
+                    if decorators:
+                        self.error(self.previous(), "Decorators are not allowed on import statements.")
                     program.imports.append(self.parse_import())
                 elif self.match(TokenType.FUNC):
-                    program.functions.append(self.parse_function())
+                    program.functions.append(self.parse_function(decorators))
                 elif self.match(TokenType.MODEL):
-                    program.models.append(self.parse_model())
+                    program.models.append(self.parse_model(decorators))
                 else:
                     # Skip unexpected tokens and try to recover
-                    self.error(self.peek(), "Expected import, func, or model declaration")
-                    self.advance()
+                    if decorators:
+                        self.error(self.peek(), "Decorators can only be applied to functions or models.")
+                    elif not self.is_at_end():
+                        self.error(self.peek(), "Expected import, func, or model declaration")
+                        self.advance()
             except ParseError as e:
                 # Report the error and try to synchronize
                 print(e)

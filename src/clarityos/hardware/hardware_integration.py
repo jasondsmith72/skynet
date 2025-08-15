@@ -14,7 +14,7 @@ from typing import Dict, List, Optional, Any, Set, Callable
 from src.clarityos.hardware.extended_hal import ExtendedHAL
 from src.clarityos.hardware.firmware_interface import FirmwareInterface
 from src.clarityos.hardware.driver_model import DriverRegistry, DriverStatus
-from src.clarityos.hardware.hardware_interface import HardwareInterface, HardwareState
+from src.clarityos.core.hardware_interface import HardwareInterface, HardwareState
 
 logger = logging.getLogger(__name__)
 

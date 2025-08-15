@@ -83,7 +83,7 @@ def add_statement_parsers(cls):
                 statements.append(stmt)
                 
         self.consume(TokenType.RBRACE, "Expected '}' after block.")
-        return Block(statements, start_token.line, start_token.column)
+        return Block(statements=statements, line=start_token.line, column=start_token.column)
 
     def parse_variable_declaration(self) -> VariableDeclaration:
         """Parse a variable declaration: var name: type = initializer;"""
@@ -100,7 +100,7 @@ def add_statement_parsers(cls):
             initializer = self.parse_expression()
             
         self.consume(TokenType.SEMICOLON, "Expected ';' after variable declaration.")
-        return VariableDeclaration(name, type_annotation, initializer, start_token.line, start_token.column)
+        return VariableDeclaration(name=name, type_annotation=type_annotation, initializer=initializer, line=start_token.line, column=start_token.column)
 
     def parse_if_statement(self) -> IfStatement:
         """Parse an if statement: if (condition) then_block [else else_block]"""
@@ -119,7 +119,7 @@ def add_statement_parsers(cls):
             self.consume(TokenType.LBRACE, "Expected '{' to start else block.")
             else_block = self.parse_block()
             
-        return IfStatement(condition, then_block, else_block, start_token.line, start_token.column)
+        return IfStatement(condition=condition, then_block=then_block, else_block=else_block, line=start_token.line, column=start_token.column)
 
     def parse_while_loop(self) -> WhileLoop:
         """Parse a while loop: while (condition) body_block"""
@@ -132,7 +132,7 @@ def add_statement_parsers(cls):
         self.consume(TokenType.LBRACE, "Expected '{' to start while block.")
         body = self.parse_block()
         
-        return WhileLoop(condition, body, start_token.line, start_token.column)
+        return WhileLoop(condition=condition, body=body, line=start_token.line, column=start_token.column)
 
     def parse_for_loop(self) -> ForLoop:
         """Parse a for loop: for (initializer; condition; update) body_block"""
@@ -159,7 +159,7 @@ def add_statement_parsers(cls):
         if not self.check(TokenType.RPAREN):
              update_expr = self.parse_expression()
              # Wrap the update expression in a statement
-             update = ExpressionStatement(update_expr, update_expr.line, update_expr.column)
+             update = ExpressionStatement(expression=update_expr, line=update_expr.line, column=update_expr.column)
              
         self.consume(TokenType.RPAREN, "Expected ')' after for clauses.")
         
@@ -167,7 +167,7 @@ def add_statement_parsers(cls):
         self.consume(TokenType.LBRACE, "Expected '{' to start for block.")
         body = self.parse_block()
         
-        return ForLoop(initializer, condition, update, body, start_token.line, start_token.column)
+        return ForLoop(initializer=initializer, condition=condition, update=update, body=body, line=start_token.line, column=start_token.column)
 
     def parse_return_statement(self) -> ReturnStatement:
         """Parse a return statement: return [value];"""
@@ -177,13 +177,13 @@ def add_statement_parsers(cls):
             value = self.parse_expression()
             
         self.consume(TokenType.SEMICOLON, "Expected ';' after return value.")
-        return ReturnStatement(value, start_token.line, start_token.column)
+        return ReturnStatement(value=value, line=start_token.line, column=start_token.column)
 
     def parse_expression_statement(self) -> ExpressionStatement:
         """Parse an expression statement: expression;"""
         expr = self.parse_expression()
         self.consume(TokenType.SEMICOLON, "Expected ';' after expression.")
-        return ExpressionStatement(expr, expr.line, expr.column)
+        return ExpressionStatement(expression=expr, line=expr.line, column=expr.column)
 
     def parse_import(self) -> ImportStatement:
         """Parse an import statement: import module [as alias]; or import module.{elem1, elem2};"""
@@ -191,19 +191,19 @@ def add_statement_parsers(cls):
         # Top-level parsing happens in Parser.parse()
         start_token = self.previous() # The 'import' token
         module_token = self.consume(TokenType.IDENTIFIER, "Expected module name.")
-        module = Identifier(module_token.value, module_token.line, module_token.column)
+        module = Identifier(name=module_token.value, line=module_token.line, column=module_token.column)
         
         # TODO: Add support for 'as alias' and '.{elements}'
         elements = [] 
         
         self.consume(TokenType.SEMICOLON, "Expected ';' after import statement.")
-        return ImportStatement(module, elements, start_token.line, start_token.column)
+        return ImportStatement(module=module, elements=elements, line=start_token.line, column=start_token.column)
 
     def parse_function(self, decorators: List[str]) -> FunctionDeclaration:
         """Parse a function declaration: [decorators] func name(params) -> return_type { body }"""
         start_token = self.previous() # The 'func' token
         name_token = self.consume(TokenType.IDENTIFIER, "Expected function name.")
-        name = Identifier(name_token.value, name_token.line, name_token.column)
+        name = Identifier(name=name_token.value, line=name_token.line, column=name_token.column)
         
         self.consume(TokenType.LPAREN, "Expected '(' after function name.")
         parameters = self.parse_parameter_list()
@@ -216,13 +216,13 @@ def add_statement_parsers(cls):
         self.consume(TokenType.LBRACE, "Expected '{' before function body.")
         body = self.parse_block()
                 
-        return FunctionDeclaration(name, parameters, return_type, body, decorators, start_token.line, start_token.column)
+        return FunctionDeclaration(name=name, parameters=parameters, return_type=return_type, body=body, decorators=decorators, line=start_token.line, column=start_token.column)
 
     def parse_model(self, decorators: List[str]) -> ModelDeclaration:
         """Parse a model declaration: [decorators] model name { layers; components; forward; train; }"""
         start_token = self.previous() # The 'model' token
         name_token = self.consume(TokenType.IDENTIFIER, "Expected model name.")
-        name = Identifier(name_token.value, name_token.line, name_token.column)
+        name = Identifier(name=name_token.value, line=name_token.line, column=name_token.column)
         
         self.consume(TokenType.LBRACE, "Expected '{' before model body.")
         
@@ -260,7 +260,7 @@ def add_statement_parsers(cls):
              # forward_pass = ForwardPassDefinition(line=start_token.line, column=start_token.column)
              raise self.error(name_token, "Model must contain a 'forward' block.")
 
-        return ModelDeclaration(name, layers, components, forward_pass, train_method, decorators, start_token.line, start_token.column)
+        return ModelDeclaration(name=name, layers=layers, components=components, forward_pass=forward_pass, train_method=train_method, decorators=decorators, line=start_token.line, column=start_token.column)
 
     def parse_layers_block(self) -> List[LayerDefinition]:
         """Parse the layers block: layers { name: Type(args...); ... }"""
@@ -268,12 +268,12 @@ def add_statement_parsers(cls):
         self.consume(TokenType.LBRACE, "Expected '{' after 'layers' keyword.")
         while not self.check(TokenType.RBRACE) and not self.is_at_end():
             layer_name_token = self.consume(TokenType.IDENTIFIER, "Expected layer name.")
-            layer_name = Identifier(layer_name_token.value, layer_name_token.line, layer_name_token.column)
+            layer_name = Identifier(name=layer_name_token.value, line=layer_name_token.line, column=layer_name_token.column)
             
             self.consume(TokenType.COLON, "Expected ':' after layer name.")
             
             layer_type_token = self.consume(TokenType.IDENTIFIER, "Expected layer type (e.g., Dense, Conv2D).")
-            layer_type = Identifier(layer_type_token.value, layer_type_token.line, layer_type_token.column)
+            layer_type = Identifier(name=layer_type_token.value, line=layer_type_token.line, column=layer_type_token.column)
             
             self.consume(TokenType.LPAREN, "Expected '(' after layer type.")
             arguments = []
@@ -284,7 +284,7 @@ def add_statement_parsers(cls):
             self.consume(TokenType.RPAREN, "Expected ')' after layer arguments.")
             
             self.consume(TokenType.SEMICOLON, "Expected ';' after layer definition.")
-            layers.append(LayerDefinition(layer_name, layer_type, arguments, layer_name_token.line, layer_name_token.column))
+            layers.append(LayerDefinition(name=layer_name, layer_type=layer_type, arguments=arguments, line=layer_name_token.line, column=layer_name_token.column))
             
         self.consume(TokenType.RBRACE, "Expected '}' after layers block.")
         return layers
@@ -296,12 +296,12 @@ def add_statement_parsers(cls):
         self.consume(TokenType.LBRACE, "Expected '{' after 'components' keyword.")
         while not self.check(TokenType.RBRACE) and not self.is_at_end():
             comp_name_token = self.consume(TokenType.IDENTIFIER, "Expected component name.")
-            comp_name = Identifier(comp_name_token.value, comp_name_token.line, comp_name_token.column)
+            comp_name = Identifier(name=comp_name_token.value, line=comp_name_token.line, column=comp_name_token.column)
             
             self.consume(TokenType.COLON, "Expected ':' after component name.")
             
             comp_type_token = self.consume(TokenType.IDENTIFIER, "Expected component model type.")
-            comp_type = Identifier(comp_type_token.value, comp_type_token.line, comp_type_token.column)
+            comp_type = Identifier(name=comp_type_token.value, line=comp_type_token.line, column=comp_type_token.column)
             
             self.consume(TokenType.LPAREN, "Expected '(' after component type.")
             arguments = []
@@ -313,7 +313,7 @@ def add_statement_parsers(cls):
             
             self.consume(TokenType.SEMICOLON, "Expected ';' after component definition.")
             # Using LayerDefinition for now
-            components.append(LayerDefinition(comp_name, comp_type, arguments, comp_name_token.line, comp_name_token.column))
+            components.append(LayerDefinition(name=comp_name, layer_type=comp_type, arguments=arguments, line=comp_name_token.line, column=comp_name_token.column))
             
         self.consume(TokenType.RBRACE, "Expected '}' after components block.")
         return components
@@ -332,13 +332,13 @@ def add_statement_parsers(cls):
         self.consume(TokenType.LBRACE, "Expected '{' before forward pass body.")
         body = self.parse_block()
         
-        return ForwardPassDefinition(parameters, return_type, body, start_token.line, start_token.column)
+        return ForwardPassDefinition(parameters=parameters, return_type=return_type, body=body, line=start_token.line, column=start_token.column)
 
     def parse_train_method(self) -> FunctionDeclaration:
         """Parse the optional train method block: train(params) -> return_type { body }"""
         # Structure is identical to a function declaration
         start_token = self.previous() # The 'train' token
-        name = Identifier("train", start_token.line, start_token.column) # Fixed name
+        name = Identifier(name="train", line=start_token.line, column=start_token.column) # Fixed name
         
         self.consume(TokenType.LPAREN, "Expected '(' after 'train'.")
         parameters = self.parse_parameter_list()
@@ -354,7 +354,7 @@ def add_statement_parsers(cls):
         # Train method cannot have decorators
         decorators = [] 
         
-        return FunctionDeclaration(name, parameters, return_type, body, decorators, start_token.line, start_token.column)
+        return FunctionDeclaration(name=name, parameters=parameters, return_type=return_type, body=body, decorators=decorators, line=start_token.line, column=start_token.column)
 
     def parse_parameter_list(self) -> List[Parameter]:
         """Parse a list of parameters: (name: type, name: type = default, ...)"""
@@ -362,7 +362,7 @@ def add_statement_parsers(cls):
         if not self.check(TokenType.RPAREN):
             while True:
                 param_token = self.consume(TokenType.IDENTIFIER, "Expected parameter name.")
-                param_name = Identifier(param_token.value, param_token.line, param_token.column)
+                param_name = Identifier(name=param_token.value, line=param_token.line, column=param_token.column)
                 
                 param_type: Optional[TypeAnnotation] = None
                 if self.match(TokenType.COLON):
@@ -372,7 +372,7 @@ def add_statement_parsers(cls):
                 if self.match(TokenType.ASSIGN):
                     default_value = self.parse_expression()
                     
-                parameters.append(Parameter(param_name, param_type, default_value, param_token.line, param_token.column))
+                parameters.append(Parameter(name=param_name, type_annotation=param_type, default_value=default_value, line=param_token.line, column=param_token.column))
                 
                 if not self.match(TokenType.COMMA):
                     break # Exit loop if no comma follows
@@ -384,20 +384,20 @@ def add_statement_parsers(cls):
         start_token = self.peek()
         
         if self.match(TokenType.TYPE_INT):
-            return SimpleType("int", start_token.line, start_token.column)
+            return SimpleType(name="int", line=start_token.line, column=start_token.column)
         elif self.match(TokenType.TYPE_FLOAT):
-            return SimpleType("float", start_token.line, start_token.column)
+            return SimpleType(name="float", line=start_token.line, column=start_token.column)
         elif self.match(TokenType.TYPE_STRING):
-            return SimpleType("string", start_token.line, start_token.column)
+            return SimpleType(name="string", line=start_token.line, column=start_token.column)
         elif self.match(TokenType.TYPE_BOOL):
-            return SimpleType("bool", start_token.line, start_token.column)
+            return SimpleType(name="bool", line=start_token.line, column=start_token.column)
         elif self.match(TokenType.TENSOR):
-            self.consume(TokenType.LBRACKET, "Expected '[' after 'tensor'.")
+            self.consume(TokenType.LT, "Expected '<' after 'tensor'.")
             element_type = self.parse_type_annotation()
             shape: List[Union[int, str]] = []
             # Check if shape is provided
-            if self.match(TokenType.COMMA):
-                while True:
+            if self.match(TokenType.LBRACKET):
+                while not self.check(TokenType.RBRACKET):
                     if self.check(TokenType.INT):
                         dim_token = self.advance()
                         shape.append(int(dim_token.value))
@@ -412,24 +412,25 @@ def add_statement_parsers(cls):
                             self.advance()
                     if not self.match(TokenType.COMMA):
                          break # Exit shape dimension loop
-            self.consume(TokenType.RBRACKET, "Expected ']' after tensor shape.")
-            return TensorType(element_type, shape, start_token.line, start_token.column)
+                self.consume(TokenType.RBRACKET, "Expected ']' after tensor shape.")
+            self.consume(TokenType.GT, "Expected '>' after tensor type.")
+            return TensorType(element_type=element_type, shape=shape, line=start_token.line, column=start_token.column)
         elif self.match(TokenType.PROB):
             self.consume(TokenType.LBRACKET, "Expected '[' after 'prob'.")
             base_type = self.parse_type_annotation()
             # Optional: Parse distribution parameters if syntax allows
             distribution = None 
             self.consume(TokenType.RBRACKET, "Expected ']' after probabilistic type.")
-            return ProbabilisticType(base_type, distribution, start_token.line, start_token.column)
+            return ProbabilisticType(base_type=base_type, distribution=distribution, line=start_token.line, column=start_token.column)
         elif self.match(TokenType.GRAD):
             self.consume(TokenType.LBRACKET, "Expected '[' after 'grad'.")
             base_type = self.parse_type_annotation()
             self.consume(TokenType.RBRACKET, "Expected ']' after gradient type.")
-            return GradientType(base_type, start_token.line, start_token.column)
+            return GradientType(base_type=base_type, line=start_token.line, column=start_token.column)
         elif self.match(TokenType.IDENTIFIER):
             # User-defined type or potentially a simple type not yet matched
             name = self.previous().value
-            return SimpleType(name, start_token.line, start_token.column)
+            return SimpleType(name=name, line=start_token.line, column=start_token.column)
         else:
             raise self.error(start_token, "Expected type name (int, float, tensor, prob, grad, or identifier).")
 

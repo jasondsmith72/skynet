@@ -393,5 +393,50 @@ class SemanticAnalyzer:
                 stmt, f"Unknown statement type: {type(stmt).__name__}"
             ))
     
+    def _analyze_variable_declaration(self, stmt: VariableDeclaration) -> None:
+        if stmt.initializer:
+            self._analyze_expression(stmt.initializer)
+
+        var_name = stmt.name.name
+        if self.current_scope.resolve(var_name):
+            self.errors.append(SemanticError(
+                stmt.name, f"Variable '{var_name}' is already defined in this scope."
+            ))
+        else:
+            self.current_scope.define(Symbol(
+                name=var_name,
+                type=stmt.type_annotation,
+                kind="variable",
+                node=stmt
+            ))
+
+    def _analyze_assignment(self, stmt: Assignment) -> None:
+        pass
+
+    def _analyze_if_statement(self, stmt: IfStatement) -> None:
+        pass
+
+    def _analyze_while_loop(self, stmt: WhileLoop) -> None:
+        pass
+
+    def _analyze_for_loop(self, stmt: ForLoop) -> None:
+        pass
+
+    def _analyze_return_statement(self, stmt: ReturnStatement) -> None:
+        pass
+
+    def _analyze_concurrent_block(self, stmt: ConcurrentBlock) -> None:
+        pass
+
+    def _analyze_expression(self, expr: Expression) -> None:
+        if isinstance(expr, VariableReference):
+            if self.current_scope.resolve(expr.name.name) is None:
+                self.errors.append(SemanticError(
+                    expr.name, f"Variable '{expr.name.name}' is not defined."
+                ))
+        elif isinstance(expr, BinaryOperation):
+            self._analyze_expression(expr.left)
+            self._analyze_expression(expr.right)
+
     # The rest of the analyzer implementation would follow...
     # We'll continue in another file to keep this one shorter
