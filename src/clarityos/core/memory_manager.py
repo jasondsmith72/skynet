@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional, Any, Set, Tuple
 
-from clarityos.core.message_bus import MessagePriority, system_bus
+from .message_bus import MessagePriority, system_bus
 
 # Configure logging
 logger = logging.getLogger(__name__)

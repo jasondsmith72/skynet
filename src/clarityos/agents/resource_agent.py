@@ -15,7 +15,7 @@ from enum import Enum, auto
 from typing import Dict, List, Optional, Set, Tuple, Union
 import random
 
-from clarityos.core.message_bus import MessagePriority, system_bus
+from ..core.message_bus import MessagePriority, system_bus
 
 
 # Configure logging

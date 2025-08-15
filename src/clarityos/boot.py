@@ -17,8 +17,8 @@ from enum import Enum, auto
 from typing import Dict, List, Optional, Any, Tuple
 
 # Updated imports for new hardware interface layer
-from src.clarityos.hardware.boot_integration import HardwareBootIntegration
-from src.clarityos.boot_update_integration import BootUpdateIntegration
+from .hardware.boot_integration import HardwareBootIntegration
+from .boot_update_integration import BootUpdateIntegration
 
 # Configure logging
 logging.basicConfig(

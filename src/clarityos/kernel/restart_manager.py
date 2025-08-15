@@ -16,8 +16,8 @@ import time
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
-from src.clarityos.core.message_bus import MessageBus
-from src.clarityos.core.priority import Priority
+from ..core.message_bus import MessageBus
+from ..core.priority import Priority
 
 logger = logging.getLogger(__name__)
 

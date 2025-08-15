@@ -11,7 +11,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional, List, Callable, Awaitable
 
-from clarityos.core.message_bus import MessageBus
+from .message_bus import MessageBus
 
 class AgentBase(ABC):
     """Base class for all agents in ClarityOS."""

@@ -5,9 +5,9 @@ This module contains tests for the lexer, parser, and semantic analyzer.
 """
 
 import unittest
-from clarity.compiler.lexer import tokenize, TokenType
-from clarity.compiler.parser import parse
-from clarity.compiler.semantic_analyzer import SemanticAnalyzer
+from ..compiler.lexer import tokenize, TokenType
+from ..compiler.parser import parse
+from ..compiler.semantic_analyzer import SemanticAnalyzer
 
 
 class TestLexer(unittest.TestCase):

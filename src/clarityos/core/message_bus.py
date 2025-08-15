@@ -31,10 +31,10 @@ class MessagePriority(Enum):
 @dataclass
 class Message:
     """Represents a message on the bus."""
-    id: str = field(default_factory=lambda: str(uuid.uuid4()))
     message_type: str
     content: Any
     source: str
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
     priority: MessagePriority = MessagePriority.NORMAL
     timestamp: float = field(default_factory=time.time)
     reply_to: Optional[str] = None

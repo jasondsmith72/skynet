@@ -10,7 +10,7 @@ import asyncio
 import time
 from typing import Dict, List, Optional, Any, Set, Callable
 
-from src.clarityos.hardware.hardware_integration import HardwareIntegrationManager
+from .hardware_integration import HardwareIntegrationManager
 
 logger = logging.getLogger(__name__)
 

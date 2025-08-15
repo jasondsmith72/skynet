@@ -14,12 +14,12 @@ import time
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
 
-from mcp.server.fastmcp import FastMCP
-from clarityos.core.message_bus import MessageBus
-from clarityos.core.agent_base import AgentBase
-from clarityos.core.priority import Priority
-from clarityos.core.resource_types import ResourceType, ResourceAllocation, ResourceRequest
-from clarityos.core.system_monitor import SystemMonitor
+from fastmcp import FastMCP
+from ...core.message_bus import MessageBus
+from ...core.agent_base import AgentBase
+from ...core.priority import Priority
+from ...core.resource_types import ResourceType, ResourceAllocation, ResourceRequest
+from ...core.system_monitor import SystemMonitor
 
 # Set up logging
 logging.basicConfig(

@@ -9,8 +9,8 @@ import asyncio
 import logging
 from typing import Dict, List, Any
 
-from clarityos.core.message_bus import system_bus
-from clarityos.learning import (
+from ..core.message_bus import system_bus
+from ..learning import (
     initialize_learning_framework,
     submit_learning_task,
     submit_pattern,
@@ -19,8 +19,8 @@ from clarityos.learning import (
     get_knowledge,
     set_knowledge
 )
-from clarityos.core.memory_manager import memory_manager
-from clarityos.core.agent_manager import agent_manager
+from ..core.memory_manager import memory_manager
+from ..core.agent_manager import agent_manager
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

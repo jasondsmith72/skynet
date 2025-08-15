@@ -17,11 +17,11 @@ from .ethernet_interface import EthernetInterface
 from .wifi_interface import WiFiInterface
 from .network_manager_operations import NetworkManagerOperations
 from .safe_driver_manager import SafeNetworkDriverManager
-from ....driver_framework import DriverManager
-from ....safety.security_manager import SecurityManager
-from ....knowledge_repository import KnowledgeRepository
-from ....hal import HardwareAbstractionLayer
-from ....core.message_bus import MessageBus
+from ...driver_framework import DriverManager
+from ...safety.security_manager import SecurityManager
+from ...knowledge_repository import HardwareKnowledgeRepository as KnowledgeRepository
+from ...hal import HardwareAbstractionLayer
+from clarityos.core.message_bus import MessageBus
 
 # Configure logging
 logger = logging.getLogger(__name__)

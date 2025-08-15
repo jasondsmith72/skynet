@@ -10,10 +10,10 @@ import threading
 from typing import Dict, Any, Optional
 
 from .network_manager import NetworkManager
-from ....driver_framework import DriverManager
-from ....safety.security_manager import SecurityManager
-from ....knowledge_repository import KnowledgeRepository
-from ....core.message_bus import MessageBus
+from ...driver_framework import DriverManager
+from ...safety.security_manager import SecurityManager
+from ...knowledge_repository import HardwareKnowledgeRepository as KnowledgeRepository
+from clarityos.core.message_bus import MessageBus
 
 # Configure logging
 logger = logging.getLogger(__name__)

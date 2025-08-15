@@ -14,17 +14,14 @@ import time
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 
-# Add project root to path to allow importing project modules
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
-
 try:
     from flask import Flask, render_template, jsonify, request
 except ImportError:
     print("Flask is required for the dashboard. Install with: pip install flask")
     sys.exit(1)
 
-from src.msp_integration.config import MSPConfiguration
-from src.msp_integration.integration import MSPIntegration
+from ..config import MSPConfiguration
+from ..integration import MSPIntegration
 
 # Configure logging
 logging.basicConfig(

@@ -10,14 +10,14 @@ import asyncio
 import logging
 from typing import Dict, List, Optional, Any
 
-from clarityos.core.message_bus import system_bus
-from clarityos.core.process_isolation import (
+from .message_bus import system_bus
+from .process_isolation import (
     process_isolation_manager,
     SecurityLevel,
     ProcessCapability
 )
-from clarityos.core.agent_manager import agent_manager
-from clarityos.core.memory_manager import memory_manager
+from .agent_manager import agent_manager
+from .memory_manager import memory_manager
 
 # Configure logging
 logger = logging.getLogger(__name__)

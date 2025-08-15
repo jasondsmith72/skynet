@@ -16,9 +16,9 @@ import os
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from src.clarityos.core.agent_base import Agent
-from src.clarityos.core.message_bus import MessageBus
-from src.clarityos.core.priority import Priority
+from ..core.agent_base import AgentBase as Agent
+from ..core.message_bus import MessageBus
+from ..core.priority import Priority
 
 logger = logging.getLogger(__name__)
 

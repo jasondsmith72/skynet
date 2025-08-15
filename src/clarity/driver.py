@@ -11,9 +11,9 @@ import sys
 import os
 from typing import List, Optional, Dict, Any
 
-from clarity.compiler.lexer import tokenize, Token, TokenType
-from clarity.compiler.parser import parse
-from clarity.compiler.semantic_analyzer import SemanticAnalyzer, SemanticError
+from .compiler.lexer import tokenize, Token, TokenType
+from .compiler.parser import parse
+from .compiler.semantic_analyzer import SemanticAnalyzer, SemanticError
 
 
 def print_tokens(tokens: List[Token]) -> None:

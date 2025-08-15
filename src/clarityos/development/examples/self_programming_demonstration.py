@@ -15,12 +15,9 @@ import logging
 import time
 from typing import Dict, List, Any
 
-# Add the parent directory to sys.path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-
-from clarityos.development.code_understanding import CodeUnderstandingSystem
-from clarityos.development.code_generation import CodeGenerationSystem
-from clarityos.development.environment_integration import EnvironmentIntegrationSystem
+from ..code_understanding import CodeUnderstandingSystem
+from ..code_generation import CodeGenerationSystem
+from ..environment_integration import EnvironmentIntegrationSystem
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, 

@@ -14,9 +14,9 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
-from clarityos.core.message_bus import MessagePriority, system_bus
-from clarityos.prototype.hardware_bus import DeviceType
-from clarityos.prototype.learning_models import (
+from ..core.message_bus import MessagePriority, system_bus
+from .hardware_bus import DeviceType
+from .learning_models import (
     LearningMode, LearningDomain, Hypothesis, Observation, 
     Experiment, KnowledgeItem
 )

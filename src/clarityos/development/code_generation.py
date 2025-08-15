@@ -13,7 +13,7 @@ import logging
 import textwrap
 from typing import Dict, List, Optional, Set, Tuple, Any, Union
 
-from clarityos.development.code_understanding import CodeUnderstandingSystem, ClassInfo, FunctionInfo
+from .code_understanding import CodeUnderstandingSystem, ClassInfo, FunctionInfo
 
 logger = logging.getLogger(__name__)
 

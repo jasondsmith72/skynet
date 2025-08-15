@@ -5,7 +5,7 @@ This package provides learning capabilities for ClarityOS, enabling the system
 to adapt and improve through experience.
 """
 
-from clarityos.core.learning_framework import (
+from ..core.learning_framework import (
     LearningDomain,
     LearningPriority,
     LearningStrategy,
@@ -13,8 +13,8 @@ from clarityos.core.learning_framework import (
 )
 
 # Import strategy and domain modules
-from clarityos.learning import strategies
-from clarityos.learning import domains
+from . import strategies
+from . import domains
 
 
 async def initialize_learning_framework():
