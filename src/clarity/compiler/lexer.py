@@ -141,6 +141,7 @@ class Lexer:
         'components': TokenType.COMPONENTS,
         'int': TokenType.TYPE_INT,
         'float': TokenType.TYPE_FLOAT,
+        'float32': TokenType.TYPE_FLOAT,
         'string': TokenType.TYPE_STRING,
         'bool': TokenType.TYPE_BOOL,
         'true': TokenType.BOOL,
@@ -355,6 +356,7 @@ class Lexer:
             '.': TokenType.DOT,
             ':': TokenType.COLON,
             ';': TokenType.SEMICOLON,
+            '!': TokenType.NOT,
         }
         
         # Handle multi-character operators
@@ -378,6 +380,14 @@ class Lexer:
             self.position += 1
             self.column += 1
             return TokenType.ARROW
+        elif char == '&' and self.peek() == '&':
+            self.position += 1
+            self.column += 1
+            return TokenType.AND
+        elif char == '|' and self.peek() == '|':
+            self.position += 1
+            self.column += 1
+            return TokenType.OR
         elif char == '<':
             return TokenType.LT
         elif char == '>':
