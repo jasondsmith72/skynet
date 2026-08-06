@@ -68,7 +68,10 @@ $qemuArgs = @(
   '-drive',   "if=pflash,format=raw,unit=0,readonly=on,file=$code"
   '-drive',   "if=pflash,format=raw,unit=1,file=$vars"
 
-  '-drive',   "file=$Image,format=qcow2,if=none,id=disk0"
+  # snapshot=on discards guest writes. Without it, the forced kill at the end of a run
+  # leaves the ext4 dirty bit set and the next boot reports "recovery required" /
+  # "Filesystems repaired" -- the test slowly degrades the image it is testing.
+  '-drive',   "file=$Image,format=qcow2,if=none,id=disk0,snapshot=on"
   '-device',  'virtio-blk-pci,drive=disk0,bootindex=1'
 
   '-netdev',  'user,id=net0'
@@ -122,24 +125,58 @@ if ($Mode -eq 'gui') {
 }
 
 # log mode: watch the serial log and stop as soon as the outcome is unambiguous.
-$deadline = (Get-Date).AddSeconds($TimeoutSec)
-$verdict  = 'TIMEOUT (no conclusive marker in serial log)'
+#
+# There are two different success markers because the stages end differently: an m0 image
+# stops at a getty login prompt, while an m1 image replaces that getty with the chat REPL
+# and therefore NEVER prints "login:". Checking only for "login:" made this verifier
+# structurally incapable of passing on the project's flagship artifact -- a perfect m1 boot
+# reported TIMEOUT.
+$successMarkers = @{
+  'REACHED CHAT PROMPT (m1)'  = 'you>'
+  'REACHED LOGIN PROMPT (m0)' = 'login:'
+}
+# The #GP dump is the WHPX/OVMF firmware crash the $CpuModel default exists to avoid; it
+# must be detectable, or a regression there looks like a plain timeout.
+$failureMarkers = @{
+  'KERNEL PANIC'            = 'Kernel panic'
+  'ROOT MOUNT FAILED'       = 'Unable to mount root|Mounting root: failed'
+  'EMERGENCY SHELL'         = 'Entering emergency|emergency recovery shell'
+  'FIRMWARE #GP (CPU model)' = 'X64 Exception Type'
+  'ILLEGAL INSTRUCTION'     = 'SIGILL|Illegal instruction'
+  'GETTY RESPAWN LOOP'      = 'respawning too fast'
+}
+
+$deadline  = (Get-Date).AddSeconds($TimeoutSec)
+$verdict   = 'TIMEOUT (no conclusive marker in serial log)'
+$succeeded = $false
+$readFailed = $true
 while ((Get-Date) -lt $deadline) {
   Start-Sleep -Seconds 3
   if ($proc.HasExited) { $verdict = "QEMU EXITED early (code $($proc.ExitCode))"; break }
-  if (Test-Path $SerialLog) {
-    $txt = Get-Content $SerialLog -Raw -ErrorAction SilentlyContinue
-    if ($txt -match 'login:')                { $verdict = 'REACHED LOGIN PROMPT'; break }
-    if ($txt -match 'Kernel panic')          { $verdict = 'KERNEL PANIC';         break }
-    if ($txt -match 'Unable to mount root')  { $verdict = 'ROOT MOUNT FAILED';    break }
-    if ($txt -match 'Entering emergency')    { $verdict = 'EMERGENCY SHELL';      break }
-  }
+  if (-not (Test-Path $SerialLog)) { continue }
+  $txt = Get-Content $SerialLog -Raw -ErrorAction SilentlyContinue
+  # Distinguish "log unreadable" from "marker not present yet". QEMU holds the chardev
+  # file open, and if the share mode excludes readers this is $null every iteration --
+  # which would otherwise be reported as an ordinary timeout with no hint of the cause.
+  if ($null -eq $txt) { continue }
+  $readFailed = $false
+
+  $hit = $failureMarkers.GetEnumerator() | Where-Object { $txt -match $_.Value } | Select-Object -First 1
+  if ($hit) { $verdict = $hit.Key; break }
+  $hit = $successMarkers.GetEnumerator() | Where-Object { $txt -match $_.Value } | Select-Object -First 1
+  if ($hit) { $verdict = $hit.Key; $succeeded = $true; break }
 }
 
 if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue }
 
-$color = if ($verdict -eq 'REACHED LOGIN PROMPT') { 'Green' } else { 'Yellow' }
+if ($readFailed -and -not $succeeded) {
+  $verdict += ' -- NOTE: the serial log was never readable; the verdict is not evidence about the guest'
+}
+
+$color = if ($succeeded) { 'Green' } else { 'Yellow' }
 Write-Host "`nVerdict: $verdict" -ForegroundColor $color
 if (Test-Path $SerialLog) {
   Write-Host "Serial log: $((Get-Item $SerialLog).Length) bytes at $SerialLog"
 }
+# Exit non-zero on anything that is not a confirmed success, so this can gate automation.
+exit $(if ($succeeded) { 0 } else { 1 })

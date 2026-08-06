@@ -13,9 +13,14 @@ generated split**, which is the decision everything else follows from.
 |---|---|---|
 | **M0** | UEFI → GRUB → kernel → OpenRC → serial console | **verified in QEMU** |
 | **M1** | `llama-server` + GGUF model autostart, chat on the console | **verified in QEMU** |
-| M2 | seatd + kiosk compositor + rendering engine, no browser chrome | in progress |
-| M3 | tool broker (`fetch`/`read`/`write`/`exec`/`render`) + surface cache | code written, untested |
+| M2 | seatd + kiosk compositor + rendering engine, no browser chrome | not started |
+| M3 | tool broker (`fetch`/`read`/`write`/`exec`) + surface cache | **written but NOT installed** |
 | M4 | USB boot on physical hardware, GPU offload, wifi | not started |
+
+`clarity-shell.py` is not wired into the build at all — the Dockerfile does not copy
+`build/files/`, and nothing creates an init script or runlevel entry for it. It is
+unreachable code, not merely untested, and it has known security defects (see the
+"injection boundary" section of [ARCHITECTURE.md](ARCHITECTURE.md)). Do not install it as-is.
 
 Measured on the dev host (i7-9750H, 4 vCPU, CPU-only, Qwen2.5-1.5B-Instruct Q4_K_M):
 **~11.6 tok/s** generation, 23 s model load.
@@ -64,7 +69,11 @@ Pick a different model with `MODEL_URL=... ./make.sh m1`. Stage m3 quality reall
 - `-Mode console` gives the guest serial console this terminal (exit with `Ctrl-A X`).
 
 At m1 the serial console autologins into the chat REPL, so powering on the VM drops you
-into a conversation with a model running locally, with no network involved.
+into a conversation with a model running locally. Inference itself needs no network — but
+note the image does bring up `eth0` by DHCP at boot, so the machine is not offline.
+
+Both harnesses pass `snapshot=on` for the disk, so guest writes are discarded and a test run
+cannot mutate the image it is testing.
 
 ## Verify end to end
 

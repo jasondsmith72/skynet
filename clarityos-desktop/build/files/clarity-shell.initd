@@ -1,0 +1,45 @@
+#!/sbin/openrc-run
+# ClarityOS Desktop -- tool broker and surface generator.
+#
+# Serves the single page that the rendering engine displays, on 127.0.0.1:7000. It is a
+# stdlib-only python3 program, so the only runtime dependency is the python3 package.
+#
+# It talks to llama-server, so it is ordered after it -- but note that llama-server's own
+# init script uses command_background=true, so "started" means "the process exists", not
+# "the model is loaded". clarity-shell binds its socket immediately and serves /health
+# straight away regardless, which is what clarity-ui waits on; inference requests that
+# arrive before the model is warm simply return an error to the page.
+
+name="clarity-shell"
+description="ClarityOS tool broker and surface generator (HTTP on 127.0.0.1:7000)"
+
+command="/opt/clarity/bin/clarity-shell"
+command_background=true
+pidfile="/run/clarity-shell.pid"
+output_log="/var/log/clarity-shell.log"
+error_log="/var/log/clarity-shell.log"
+
+# Overridable from /etc/conf.d/clarity-shell. Exported at the top level of the script so
+# they are in the environment that start-stop-daemon hands to the child.
+export CLARITY_LLAMA="${CLARITY_LLAMA:-http://127.0.0.1:8080}"
+export CLARITY_PORT="${CLARITY_PORT:-7000}"
+export CLARITY_STATE="${CLARITY_STATE:-/var/lib/clarity}"
+export CLARITY_DOCS="${CLARITY_DOCS:-/root/Documents}"
+export HOME="${HOME:-/root}"
+# Unbuffered, so the log is useful while the process is still running.
+export PYTHONUNBUFFERED=1
+
+depend() {
+	need localmount llama-server
+	after bootmisc
+}
+
+start_pre() {
+	# clarity-shell creates these itself, but doing it here means a permissions or
+	# read-only-root problem shows up as a service failure rather than a traceback in
+	# a log nobody is reading yet.
+	checkpath --directory --mode 0755 "$CLARITY_STATE" || return 1
+	checkpath --directory --mode 0755 "$CLARITY_STATE/surfaces" || return 1
+	checkpath --directory --mode 0700 "$CLARITY_DOCS" || return 1
+	return 0
+}

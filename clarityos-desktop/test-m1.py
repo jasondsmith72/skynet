@@ -59,6 +59,13 @@ class Serial:
         while self.alive:
             try:
                 chunk = self.sock.recv(4096)
+            except socket.timeout:
+                # NOT fatal. socket.create_connection(timeout=N) leaves that timeout on the
+                # returned socket, and the guest is legitimately silent for seconds at a
+                # time (GRUB's menu delay alone outlasts a short timeout). Treating this as
+                # fatal killed the reader thread before the first byte ever arrived, which
+                # presented as a perfectly-booting guest emitting zero console output.
+                continue
             except OSError:
                 break
             if not chunk:
@@ -154,7 +161,11 @@ def main() -> int:
         "-smp", args.cpus,
         "-drive", f"if=pflash,format=raw,unit=0,readonly=on,file={CODE_FD}",
         "-drive", f"if=pflash,format=raw,unit=1,file={varsfd}",
-        "-drive", f"file={args.image},format=qcow2,if=none,id=disk0",
+        # snapshot=on discards guest writes. Without it every test run mutates the image
+        # under test: the hard kill at the end leaves the ext4 dirty bit set, and the next
+        # boot logs "recovery required" and "Filesystems repaired". Tests must not degrade
+        # the artifact they are testing.
+        "-drive", f"file={args.image},format=qcow2,if=none,id=disk0,snapshot=on",
         "-device", "virtio-blk-pci,drive=disk0,bootindex=1",
         "-netdev", "user,id=net0",
         "-device", "virtio-net-pci,netdev=net0",
@@ -162,28 +173,38 @@ def main() -> int:
         "-rtc", "base=utc",
         "-no-reboot",
         # wait=on makes QEMU block until we attach, so no early output is lost.
-        "-serial", f"tcp:127.0.0.1:{PORT},server=on,wait=on",
+        "-serial", f"tcp:127.0.0.1:{port},server=on,wait=on",
     ]
     if not args.gui:
         qemu_args += ["-display", "none"]
 
-    print(f"Launching QEMU (serial on tcp/{PORT}, log -> {logfile.name})")
-    proc = subprocess.Popen(qemu_args, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    print(f"Launching QEMU (serial on tcp/{port}, log -> {logfile.name})")
+    # stderr goes to a FILE, never a pipe. An undrained pipe fills its buffer and then
+    # blocks QEMU itself, which presents as a guest that produces no console output at
+    # all and looks exactly like a wedged VM.
+    with qemu_err.open("wb") as errf:
+        proc = subprocess.Popen(qemu_args, stdout=subprocess.DEVNULL, stderr=errf)
 
-    sock = None
-    for _ in range(40):
+        sock = None
+        for _ in range(40):
+            try:
+                sock = socket.create_connection(("127.0.0.1", port), timeout=3)
+                break
+            except OSError:
+                if proc.poll() is not None:
+                    break
+                time.sleep(0.5)
+
+    def qemu_stderr(limit: int = 2000) -> str:
         try:
-            sock = socket.create_connection(("127.0.0.1", PORT), timeout=3)
-            break
+            return qemu_err.read_text("utf-8", "replace")[-limit:].strip()
         except OSError:
-            if proc.poll() is not None:
-                err = proc.stderr.read().decode("utf-8", "replace")
-                print(f"FAIL: QEMU exited before serial was reachable\n{err[-2000:]}")
-                return 2
-            time.sleep(0.5)
+            return ""
+
     if sock is None:
-        proc.kill()
-        print("FAIL: could not attach to the guest serial port")
+        if proc.poll() is None:
+            proc.kill()
+        print(f"FAIL: could not attach to the guest serial port\n{qemu_stderr()}")
         return 2
 
     ser = Serial(sock, logfile)
@@ -206,19 +227,40 @@ def main() -> int:
 
         if got_prompt:
             print(f"\n--- inference ---\n  sending: {PROMPT!r}")
-            ser.send(PROMPT)
-            results["model replied"] = bool(ser.wait_for(r"ai>\s*\S", 420, "model reply", proc))
-            time.sleep(25)  # let the token stream finish
+            try:
+                ser.send(PROMPT)
+            except OSError as e:
+                print(f"  could not write to the guest console: {e}")
+                results["model replied"] = False
+            else:
+                # clarity-chat prints the "ai>" prefix BEFORE calling the model, and on
+                # failure follows it with "[inference failed: ...]". So a bare r"ai>\s*\S"
+                # matches the failure text and reports PASS on a total inference failure --
+                # falsifying the exact claim this test exists to make. Require a real token
+                # on the same line, and separately assert the content answers the prompt.
+                reply = ser.wait_for(r"ai>[ \t]{0,4}(?!\[inference failed)(?!\n)\S",
+                                     420, "model reply", proc)
+                time.sleep(25)  # let the token stream finish
+                transcript = ser.tail(3000)
+                answered = bool(reply) and "," in transcript.split("ai>")[-1]
+                results["model replied"] = bool(reply)
+                results["reply answers prompt"] = answered
+                if not answered:
+                    print("  reply arrived but does not look like a comma-separated list")
             print("\n--- transcript tail ---")
             for line in ser.tail(1600).splitlines()[-22:]:
                 print("    " + line)
         else:
             results["model replied"] = False
+            results["reply answers prompt"] = False
     finally:
         ser.close()
         if proc.poll() is None:
             proc.kill()
         print(f"\nFull serial log: {logfile}")
+        err = qemu_stderr()
+        if err:
+            print(f"QEMU stderr ({qemu_err.name}):\n    " + "\n    ".join(err.splitlines()[-12:]))
 
     print("\n=================== RESULTS ===================")
     width = max(len(k) for k in results)

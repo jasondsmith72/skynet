@@ -39,7 +39,9 @@ ESP_START=2048
 ESP_SECTORS=$((256 * 2048))                       # 256 MiB
 case "$STAGE" in
   m0) ROOT_MIB=3072 ;;
-  m1) ROOT_MIB=6144 ;;                            # room for llama-server + model
+  # The m1 rootfs measures ~1.3 GB including the model, so 4 GiB leaves comfortable room
+  # for M2's graphics stack (~600 MB) without inflating the image. 6 GiB was simply waste.
+  m1) ROOT_MIB=4096 ;;
   *)  echo "unknown STAGE: $STAGE" >&2; exit 2 ;;
 esac
 ROOT_SECTORS=$((ROOT_MIB * 2048))
@@ -320,20 +322,26 @@ cat > "$ROOTFS/etc/inittab" <<EOF
 ::sysinit:/sbin/openrc boot
 ::wait:/sbin/openrc default
 
-tty1::respawn:/sbin/getty --noclear -n -l /bin/login 38400 tty1
+tty1::respawn:/sbin/getty -n -l /bin/login 38400 tty1
 $SERIAL_GETTY
 
 ::ctrlaltdel:/sbin/reboot
 ::shutdown:/sbin/openrc shutdown
 EOF
 
+# MODEL_NAME is derived from MODEL_URL unconditionally, so it is set even at m0 where no
+# model is installed. Report what is actually on the disk: wrong provenance data is worse
+# than missing provenance data.
+if [ "$STAGE" = "m1" ]; then MODEL_RECORDED="$MODEL_NAME"; else MODEL_RECORDED="none"; fi
 cat > "$ROOTFS/etc/clarityos-build" <<EOF
 stage=$STAGE
 alpine=$ALPINE_BRANCH
 kernel=$KVER
+root_label=CLARITYROOT
+esp_label=CLARITYESP
 root_partuuid=$ROOT_GUID
 esp_partuuid=$ESP_GUID
-model=${MODEL_NAME:-none}
+model=$MODEL_RECORDED
 EOF
 
 cat > "$ROOTFS/etc/motd" <<EOF
@@ -392,29 +400,16 @@ grub-mkstandalone \
 step "BOOTX64.EFI $(stat -c %s "$WORK/BOOTX64.EFI") bytes"
 
 # ---------------------------------------------------------------------------
-# 6. Filesystem images
+# 6. Assemble the GPT disk, writing both filesystems in place
 # ---------------------------------------------------------------------------
-log "Creating ESP (FAT32, $((ESP_SECTORS / 2048)) MiB)"
-rm -f "$WORK/esp.img"
-truncate -s $((ESP_SECTORS * 512)) "$WORK/esp.img"
-mkfs.vfat -F 32 -n CLARITYESP "$WORK/esp.img" >/dev/null || die "mkfs.vfat failed"
-mmd   -i "$WORK/esp.img" ::/EFI ::/EFI/BOOT
-mcopy -i "$WORK/esp.img" "$WORK/BOOTX64.EFI"           ::/EFI/BOOT/BOOTX64.EFI
-mcopy -i "$WORK/esp.img" "$ROOTFS/boot/vmlinuz-lts"    ::/vmlinuz-lts
-mcopy -i "$WORK/esp.img" "$ROOTFS/boot/initramfs-lts"  ::/initramfs-lts
-
-log "Creating root filesystem (ext4, ${ROOT_MIB} MiB)"
-rm -f "$WORK/root.img"
-mke2fs -q -t ext4 -L CLARITYROOT -d "$ROOTFS" -b 4096 -N 65536 \
-       "$WORK/root.img" $((ROOT_SECTORS / 8)) || die "mke2fs failed"
-tune2fs -c 0 -i 0 "$WORK/root.img" >/dev/null
-
-# ---------------------------------------------------------------------------
-# 7. Assemble the GPT disk
-# ---------------------------------------------------------------------------
+# Both mkfs.vfat and mke2fs can write a filesystem at a byte/sector offset inside an
+# existing file, and mtools addresses an image region as "file@@offset". Building directly
+# into the final image avoids two full-size intermediates plus two dd passes, cutting peak
+# disk from roughly 13 GB to the size of the image itself. The earlier intermediate-plus-dd
+# version was being OOM/disk killed on a loaded machine.
 log "Assembling GPT disk ($((TOTAL_SECTORS / 2048)) MiB)"
 rm -f "$RAW"
-truncate -s $((TOTAL_SECTORS * 512)) "$RAW"
+truncate -s $((TOTAL_SECTORS * 512)) "$RAW"     # sparse: costs nothing until written
 sfdisk --no-tell-kernel --quiet "$RAW" <<EOF
 label: gpt
 label-id: $DISK_GUID
@@ -424,13 +419,43 @@ first-lba: $ESP_START
 start=$ESP_START,  size=$ESP_SECTORS,  type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B, uuid=$ESP_GUID,  name="CLARITYESP"
 start=$ROOT_START, size=$ROOT_SECTORS, type=0FC63DAF-8483-4772-8E79-3D69D8477DE4, uuid=$ROOT_GUID, name="CLARITYROOT"
 EOF
-dd if="$WORK/esp.img"  of="$RAW" bs=1M seek=$((ESP_START / 2048))  conv=notrunc status=none
-dd if="$WORK/root.img" of="$RAW" bs=1M seek=$((ROOT_START / 2048)) conv=notrunc status=none
+
+log "Creating ESP (FAT32, $((ESP_SECTORS / 2048)) MiB)"
+# The ESP is built as a standalone image and copied in, NOT created in place with
+# `mkfs.vfat --offset`. That variant produces a filesystem mtools reads happily -- correct
+# label, all files listed, valid 0x55AA signature, total_sectors within the partition --
+# but which EDK II refuses to mount: the UEFI shell shows BLK0/BLK1/BLK2 with no FS0:
+# mapping, so BOOTX64.EFI is never found and the firmware drops to the EFI shell. The
+# likely cause is the FAT32 backup boot sector / FSInfo landing at the wrong offset, which
+# mtools ignores and the firmware's stricter validation does not.
+# At 256 MiB the intermediate plus one dd is cheap; the ext4 root below is where building
+# in place actually mattered (it removed a 6 GiB intermediate and a 6 GiB dd).
+rm -f "$WORK/esp.img"
+truncate -s $((ESP_SECTORS * 512)) "$WORK/esp.img"
+mkfs.vfat -F 32 -n CLARITYESP "$WORK/esp.img" >/dev/null || die "mkfs.vfat failed"
+mmd   -i "$WORK/esp.img" ::/EFI ::/EFI/BOOT                              || die "mmd failed"
+mcopy -i "$WORK/esp.img" "$WORK/BOOTX64.EFI"    ::/EFI/BOOT/BOOTX64.EFI  || die "mcopy grub failed"
+mcopy -i "$WORK/esp.img" "$ROOTFS/boot/vmlinuz-lts"   ::/vmlinuz-lts     || die "mcopy kernel failed"
+mcopy -i "$WORK/esp.img" "$ROOTFS/boot/initramfs-lts" ::/initramfs-lts   || die "mcopy initramfs failed"
+dd if="$WORK/esp.img" of="$RAW" bs=1M seek=$((ESP_START / 2048)) conv=notrunc status=none
+rm -f "$WORK/esp.img"
+
+log "Creating root filesystem in place (ext4, ${ROOT_MIB} MiB)"
+# Modern mke2fs already defaults ext4 to max_mount_count=-1 and check_interval=0, so no
+# tune2fs pass is needed (and tune2fs has no offset option anyway).
+mke2fs -q -t ext4 -L CLARITYROOT -d "$ROOTFS" -b 4096 -N 65536 \
+       -E offset=$((ROOT_START * 512)) \
+       "$RAW" $((ROOT_SECTORS / 8)) || die "mke2fs failed"
+
 sfdisk --list "$RAW" | sed 's/^/    /'
+step "image on disk: $(du -h "$RAW" | cut -f1) (sparse; apparent $(stat -c %s "$RAW") bytes)"
 
 log "Converting to qcow2"
 rm -f "$QCOW"
-qemu-img convert -f raw -O qcow2 -c "$RAW" "$QCOW" || die "qemu-img convert failed"
+# No -c: qcow2 compression buys ~100 MB here but is CPU/memory hungry enough to get the
+# builder OOM-killed on a loaded machine. qcow2 already allocates only used clusters, so
+# the uncompressed result is still close to the real data size.
+qemu-img convert -f raw -O qcow2 "$RAW" "$QCOW" || die "qemu-img convert failed"
 
 log "Exporting to /out"
 cp "$QCOW" "$OUT/clarityos.qcow2"
