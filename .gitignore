@@ -1,0 +1,41 @@
+# --- ClarityOS Desktop build artifacts -------------------------------------
+# Disk images are gigabytes and fully reproducible from build/. Never commit them.
+clarityos-desktop/out/
+clarityos-desktop/cache/
+*.qcow2
+*.raw
+*.img
+*.fd
+*.gguf
+
+# Serial console captures from boot tests
+serial*.log
+*-serial.log
+m1-diag.log
+
+# --- Python ----------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# --- Rust ------------------------------------------------------------------
+target/
+**/target/
+
+# --- Logs and scratch ------------------------------------------------------
+*.log
+*.tmp
+*.bak
+*.broken
+
+# --- Editors / OS ----------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini

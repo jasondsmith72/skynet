@@ -1,0 +1,125 @@
+#!/sbin/openrc-run
+# ClarityOS Desktop -- the rendering surface.
+#
+#   cage  kiosk Wayland compositor (wlroots). One client, always fullscreen, no decorations,
+#         no panel, no window management. Owns the DRM device via seatd.
+#   cog   WPE WebKit launcher. A rendering engine with a URL, not a browser: no tab strip,
+#         no address bar, no menus, no chrome of any kind.
+#
+# Every environment variable below was verified empirically against Alpine 3.21
+# (cage 0.2.0, cog 0.18.3, wpewebkit 2.40.5, wlroots 0.18.1, seatd 0.9.1) -- see
+# docs/m2-graphics-notes.md for the evidence and for the two items that could not be
+# verified without real DRM hardware.
+
+name="clarity-ui"
+description="Fullscreen rendering surface (cage + cog), no browser chrome"
+
+# --- tunables, overridable from /etc/conf.d/clarity-ui -----------------------------------
+# The page to display, and a URL that answering 200 means it is safe to display it. cog
+# fetches the URL exactly once at startup and paints an error page if it is not there yet,
+# so waiting matters more than it looks like it should.
+: ${clarity_url:=http://127.0.0.1:7000/}
+: ${clarity_health:=http://127.0.0.1:7000/health}
+: ${clarity_health_timeout:=90}
+
+# The VT cage should own. seatd binds a client to whichever VT is *active* when the client
+# connects (seatd 0.9.1, seat.c:seat_update_vt -> VT_GETSTATE on /dev/tty0), so the only way
+# to choose is to switch to it first. Using VT 2 keeps a debugging getty usable on tty1.
+# Set empty to skip the switch and let cage take whatever VT is foreground (normally 1).
+: ${clarity_vt:=2}
+
+# Background colour painted before the page loads; matching the page avoids a white flash.
+: ${clarity_bg:=#0d1117}
+
+# WPE WebKit sandboxes its web process with bubblewrap. Set to "no" only if bwrap cannot
+# create a user namespace on this kernel -- it turns off a real security boundary.
+: ${clarity_sandbox:=yes}
+
+command="/usr/bin/cage"
+command_args="-d -- /usr/bin/cog -P wl --bg-color=${clarity_bg} ${clarity_url}"
+command_background=true
+pidfile="/run/clarity-ui.pid"
+output_log="/var/log/clarity-ui.log"
+error_log="/var/log/clarity-ui.log"
+
+# --- runtime environment -----------------------------------------------------------------
+# Exported at the top level so they are present in the environment start-stop-daemon passes
+# to cage, and so cog inherits them through cage.
+
+# Mandatory. Without it cog aborts immediately:
+#   "error: XDG_RUNTIME_DIR is invalid or not set in the environment."
+# Nothing else on this system creates it -- there is no elogind and no PAM session.
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/0}"
+export HOME="${HOME:-/root}"
+export XDG_SESSION_TYPE=wayland
+
+# libseat tries seatd, then logind, then noop. libelogind.so.0 is present on this image
+# (pulled in as a transitive dependency) but no elogind daemon runs, and the noop backend
+# "succeeds" while handing out no devices. Naming the backend turns a silent black screen
+# into a clear error in the log.
+export LIBSEAT_BACKEND=seatd
+
+# The QEMU GPU is virtio-gpu with virgl disabled ("[drm] features: -virgl"), so there is no
+# hardware GL. pixman is wlroots' CPU compositor: it uses DRM dumb buffers and needs no EGL
+# at all, which removes the whole GL stack from the compositor's critical path.
+export WLR_RENDERER="${WLR_RENDERER:-pixman}"
+# Only consulted if WLR_RENDERER is switched to gles2/auto, where wlroots otherwise refuses
+# to run on llvmpipe: "Software rendering detected, please use the
+# WLR_RENDERER_ALLOW_SOFTWARE environment variable to proceed".
+export WLR_RENDERER_ALLOW_SOFTWARE=1
+# cog's web process still needs EGL. This forces Mesa onto llvmpipe/swrast instead of
+# trying (and failing) to find a hardware driver for the virtio-gpu node.
+export LIBGL_ALWAYS_SOFTWARE=1
+
+depend() {
+	# udev, not mdev: wlroots enumerates DRM and input devices through libudev, and
+	# eudev's libudev reads the database that udevd writes under /run/udev.
+	need localmount seatd udev clarity-shell
+	after llama-server modules
+	use dbus
+}
+
+start_pre() {
+	# 0700 and owned by the user, or cog rejects it as invalid. checkpath does not create
+	# missing parents, so /run/user comes first.
+	checkpath --directory --mode 0755 --owner root:root /run/user || return 1
+	checkpath --directory --mode 0700 --owner root:root "$XDG_RUNTIME_DIR" || return 1
+
+	if [ "$clarity_sandbox" = "no" ]; then
+		ewarn "WPE WebKit sandbox disabled (clarity_sandbox=no)"
+		export WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1
+	elif [ ! -x /usr/bin/bwrap ]; then
+		# Without bwrap, cog does not degrade -- it aborts with
+		# "Failed to start dbus proxy: Failed to spawn child process /usr/bin/bwrap".
+		eerror "/usr/bin/bwrap is missing; install bubblewrap or set clarity_sandbox=no"
+		return 1
+	fi
+
+	if [ -n "$clarity_vt" ]; then
+		ebegin "Moving the console to VT $clarity_vt for the rendering surface"
+		chvt "$clarity_vt"
+		# Not fatal: if the switch fails, seatd binds cage to the foreground VT instead.
+		eend $? "could not switch VT; cage will take the foreground VT"
+	fi
+
+	# cog loads its URL once and does not retry, so do not start it before there is
+	# something to load.
+	ebegin "Waiting for $clarity_health"
+	local waited=0
+	while [ "$waited" -lt "$clarity_health_timeout" ]; do
+		if wget -q -T 2 -O /dev/null "$clarity_health" 2>/dev/null; then
+			eend 0
+			return 0
+		fi
+		sleep 1
+		waited=$((waited + 1))
+	done
+	eend 1 "no response after ${clarity_health_timeout}s"
+	return 1
+}
+
+stop_post() {
+	# Hand the display back to the text console so a failed UI leaves a usable machine.
+	[ -n "$clarity_vt" ] && chvt 1
+	return 0
+}
